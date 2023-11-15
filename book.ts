@@ -1,4 +1,4 @@
-import { App, Editor, ButtonComponent, Modal, Notice, Plugin, getBlobArrayBuffer, Setting, SuggestModal, Menu, MenuItem, Instruction } from 'obsidian';
+import { App, ButtonComponent, Modal, getBlobArrayBuffer, Setting, SuggestModal } from 'obsidian';
 
 const GOOGLE_BOOKS_API_URL = "https://www.googleapis.com/books/v1/volumes";
 
@@ -8,25 +8,23 @@ interface Book {
     subtitle: string;
     authors: string[]
     tags: string[]
-    coverURL: string
+    pages: number
     publisher: string
     published: string
+    isbn: string[]
     rating: number
     previewLink: string
-    pages: number
-    isbn: string[]
     language: string
     summary: string
+    coverURL: string
     industryIdentifiers: any[]
 }
 
 export class SearchBook extends SuggestModal<Book> {
 
-    searchQuery: string
-
-    constructor(app: App, searchQuery: any) {
+    constructor(app: App) {
         super(app);
-        this.setPlaceholder("Enter search keyword")
+        this.setPlaceholder("Search book by content, title, ISBN")
         const instructions = [
             {
                 command: "↑↓",
@@ -38,11 +36,10 @@ export class SearchBook extends SuggestModal<Book> {
             }
         ];
         this.setInstructions(instructions)
-        this.emptyStateText = "test"
     }
 
     async searchBooks(query: string): Promise<Book[]> {
-        
+
         const searchQueryURI = encodeURIComponent(query);
         const urlSearch = `${GOOGLE_BOOKS_API_URL}?q=${searchQueryURI}&maxResults=40`;
 
@@ -142,13 +139,13 @@ class CreateBook extends Modal {
     book: Book
     fileName: string
 
-	constructor(app: App, book: Book) {
-		super(app);
+    constructor(app: App, book: Book) {
+        super(app);
 
         this.book = book
 
         this.fetchBookFurtherDetails();
-	}
+    }
 
     escapeYAMLForbiddenChars(input: string) {
         if (input == undefined) {
@@ -156,20 +153,20 @@ class CreateBook extends Modal {
         }
         // Define the list of YAML forbidden characters and their escape sequences
         const forbiddenChars: { [key: string]: string } = {
-          '\\': '\\\\',
-          '"': '\\"',
-          '\n': '\\n',
-          '\r': '\\r',
-          '\t': '\\t',
-          '\b': '\\b',
-          '\f': '\\f',
-          '\v': '\\v',
-          '\0': '\\0',
-          '\x85': '\\x85',
-          '\u2028': '\\u2028',
-          '\u2029': '\\u2029'
+            '\\': '\\\\',
+            '"': '\\"',
+            '\n': '\\n',
+            '\r': '\\r',
+            '\t': '\\t',
+            '\b': '\\b',
+            '\f': '\\f',
+            '\v': '\\v',
+            '\0': '\\0',
+            '\x85': '\\x85',
+            '\u2028': '\\u2028',
+            '\u2029': '\\u2029'
         };
-      
+
         // Replace each forbidden character with its escape sequence
         return input.replace(/[\\\"\n\r\t\b\f\v\0\x85\u2028\u2029]/g, match => forbiddenChars[match]);
     }
@@ -179,7 +176,7 @@ class CreateBook extends Modal {
         if (categories1 == undefined && categories2 == undefined) {
             return []
         }
-    
+
         let categories = []
         if (categories1 == undefined) {
             categories = categories2
@@ -188,7 +185,7 @@ class CreateBook extends Modal {
         } else {
             categories = [...categories1, ...categories2]
         }
-    
+
         const allItems = categories.flatMap(item =>
             item.split(/[&/]/).map(subItem => subItem.trim().split(/\s+/).join('-'))
         );
@@ -214,18 +211,18 @@ class CreateBook extends Modal {
         if (dateString1 == undefined && dateString2 == undefined) {
             return ""
         }
-    
+
         if (dateString1 == undefined) {
             return dateString2
         }
-    
+
         if (dateString2 == undefined) {
             return dateString1
         }
-    
+
         const date1 = new Date(dateString1);
         const date2 = new Date(dateString2);
-      
+
         if (date1 < date2) {
             return dateString1;
         } else if (date2 < date1) {
@@ -239,11 +236,11 @@ class CreateBook extends Modal {
         try {
             const bookURL = GOOGLE_BOOKS_API_URL + "/" + encodeURIComponent(this.book.id);
             const bookRes = await fetch(bookURL);
-    
+
             if (!bookRes.ok) {
                 throw new Error(`HTTP error! status: ${bookRes.status}`);
             }
-    
+
             const bookV2 = await bookRes.json();
 
             this.book.title = bookV2.volumeInfo.title || this.book.title
@@ -273,9 +270,9 @@ class CreateBook extends Modal {
         let attempt = 0;
         let exist;
         let newFileName = ""
-    
+
         while (true) {
-            
+
             if (attempt === 0) {
                 newFileName = bookFile
                 exist = this.app.vault.getAbstractFileByPath(newFileName)
@@ -301,7 +298,7 @@ class CreateBook extends Modal {
         });
     }
 
-    addAuthorSetting(contentEl: HTMLElement , index: number) {
+    addAuthorSetting(contentEl: HTMLElement, index: number) {
         new Setting(contentEl)
             .addText(text => text
                 .setValue(this.book.authors[index])
@@ -318,45 +315,46 @@ class CreateBook extends Modal {
                             1
                         );
                         this.redrawAuthorsList(contentEl);
-                    })})
+                    })
+            })
     }
 
-	onOpen() {
+    onOpen() {
         this.containerEl.addClass('create-book')
-		const {contentEl} = this;
-		this.titleEl.textContent = "Create Book Note";
+        const { contentEl } = this;
+        this.titleEl.textContent = "Create Book Note";
 
         this.fileName = `Books/${this.sanitizeFilename()}.md`
 
-		new Setting(contentEl)
-		.setName('File Name')       
-		.setDesc('Enter book file name')
-		.addText(text => text
-			.setValue(this.fileName)
-			.onChange(async (value) => {
-				this.fileName = value
-			}
-			))
-		
-		new Setting(contentEl)
-		.setName('Title')
-		.setDesc('Book title')
-		.addText(text => text
-			.setValue(this.book.title)
-			.onChange(async (value) => {
-				this.book.title = value
-			}
-			))
+        new Setting(contentEl)
+            .setName('File Name')
+            .setDesc('Enter book file name')
+            .addText(text => text
+                .setValue(this.fileName)
+                .onChange(async (value) => {
+                    this.fileName = value
+                }
+                ))
 
-		new Setting(contentEl)
-		.setName('Subtitle')
-		.setDesc('Book subtitle')
-		.addText(text => text
-			.setValue(this.book.subtitle)
-			.onChange(async (value) => {
-				this.book.subtitle = value
-			}
-			))
+        new Setting(contentEl)
+            .setName('Title')
+            .setDesc('Book title')
+            .addText(text => text
+                .setValue(this.book.title)
+                .onChange(async (value) => {
+                    this.book.title = value
+                }
+                ))
+
+        new Setting(contentEl)
+            .setName('Subtitle')
+            .setDesc('Book subtitle')
+            .addText(text => text
+                .setValue(this.book.subtitle)
+                .onChange(async (value) => {
+                    this.book.subtitle = value
+                }
+                ))
 
         new Setting(this.contentEl)
             .setName("Add Author")
@@ -371,15 +369,15 @@ class CreateBook extends Modal {
                         this.addAuthorSetting(authorsContainer, this.book.authors.length - 1);
                     });
             });
-        
-            const authorsContainer = contentEl.createEl('div');    
-            const s = new Setting(authorsContainer)
 
-            this.book.authors.forEach((author, index) => {
-                this.addAuthorSetting(authorsContainer, index);
-            });
+        const authorsContainer = contentEl.createEl('div');
+        const s = new Setting(authorsContainer)
 
-            new Setting(contentEl)
+        this.book.authors.forEach((author, index) => {
+            this.addAuthorSetting(authorsContainer, index);
+        });
+
+        new Setting(contentEl)
             .setName('Pages')
             .setDesc('Book pages')
             .addText(text => text
@@ -389,28 +387,28 @@ class CreateBook extends Modal {
                 }
                 ))
 
-            new Setting(contentEl)
-                .setName('Publisher')
-                .setDesc('Book publisher')
-                .addText(text => text
-                    .setValue(this.book.publisher)
-                    .onChange(async (value) => {
-                        this.book.publisher = value
-                    }
-                    ))
+        new Setting(contentEl)
+            .setName('Publisher')
+            .setDesc('Book publisher')
+            .addText(text => text
+                .setValue(this.book.publisher)
+                .onChange(async (value) => {
+                    this.book.publisher = value
+                }
+                ))
 
-            new Setting(contentEl)
-                .setName('Published at')
-                .setDesc('Book published at')
-                .addMomentFormat(text => text
-                    .setDefaultFormat('YYYY-MM-DD')
-                    .setValue(this.book.published)
-                    .onChange(async (value) => {
-                        this.book.published = value
-                    }
-                    ))
+        new Setting(contentEl)
+            .setName('Published at')
+            .setDesc('Book published at')
+            .addMomentFormat(text => text
+                .setDefaultFormat('YYYY-MM-DD')
+                .setValue(this.book.published)
+                .onChange(async (value) => {
+                    this.book.published = value
+                }
+                ))
 
-            new Setting(contentEl)
+        new Setting(contentEl)
             .setName('Rating')
             .setDesc('Book rating')
             .addText(text => text
@@ -420,7 +418,7 @@ class CreateBook extends Modal {
                 }
                 ))
 
-            new Setting(contentEl)
+        new Setting(contentEl)
             .setName('Cover')
             .setDesc('Book cover')
             .addText(text => text
@@ -430,48 +428,48 @@ class CreateBook extends Modal {
                 }
                 ))
 
-		new Setting(contentEl)
-			.addButton(button => {
-				button
-					.setButtonText('Create Note')
-					.onClick(() => {
+        new Setting(contentEl)
+            .addButton(button => {
+                button
+                    .setButtonText('Create Note')
+                    .onClick(() => {
                         this.createBookNote()
-						this.close()
-					})
-			})
-			.addButton(button => {
-				button
-					.setButtonText('Cancel')
-					.onClick(() => { this.close() })
-			})
-            
-	}
+                        this.close()
+                    })
+            })
+            .addButton(button => {
+                button
+                    .setButtonText('Cancel')
+                    .onClick(() => { this.close() })
+            })
 
-	onClose() {
-		const {contentEl} = this;
-		contentEl.empty();
-	}
+    }
+
+    onClose() {
+        const { contentEl } = this;
+        contentEl.empty();
+    }
 
     async downloadImage(url: string, path: string) {
         const proxyUrl = 'https://corsproxy.io/?'
-    
-        const headers = {'X-Requested-With': 'XMLHttpRequest'};
-    
+
+        const headers = { 'X-Requested-With': 'XMLHttpRequest' };
+
         const res = await fetch(`${proxyUrl}${url}`, {
             method: 'GET',
             mode: 'cors',
             headers: headers,
         });
-    
+
         const imageblob = await res.blob()
         const image = await getBlobArrayBuffer(imageblob)
-    
+
         try {
             await this.app.vault.createBinary(path, image);
         } catch (error) {
             throw new Error(`Could not download cover "${url}" to path "${path}": ${error}`);
         }
-        
+
     }
 
     async createBookNote() {
@@ -496,7 +494,7 @@ class CreateBook extends Modal {
         const nowDate = new Date();
         const date = [
             nowDate.getFullYear(),
-            (nowDate.getMonth()+1).toString().padStart(2, '0'),
+            (nowDate.getMonth() + 1).toString().padStart(2, '0'),
             nowDate.getDate().toString().padStart(2, '0')
         ].join('-');
 
@@ -554,7 +552,7 @@ where file.name = this.file.name
         });
 
         await this.downloadImage(
-            this.book.coverURL.trim(), 
+            this.book.coverURL.trim(),
             coverFile
         )
 
