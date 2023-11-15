@@ -7,14 +7,20 @@ If your plugin does not need CSS, delete this file.
 
 */
 
-.detailsContainer {
-    margin: 5px;
+.details-container {
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+.info-container {
+    margin-right1: 10px;
+    margin-top1: 5px;
 }
 
 .book-title {
     font-weight: bold;
     /* Add any other styling you need here */
-    margin-bottom: 5px;
+    margin-bottom1: 5px;
 }
 
 .book-author {
@@ -24,15 +30,6 @@ If your plugin does not need CSS, delete this file.
 .summary-wrapper {
     width: 100%;
     clear: both;
-}
-
-.imgContainer {
-    margin-top: 5px;
-}
-
-.info-container {
-    margin-right: 10px;
-    margin-top1: 5px;
 }
 
 .create-book .modal {
