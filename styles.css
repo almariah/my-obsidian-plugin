@@ -7,6 +7,16 @@ If your plugin does not need CSS, delete this file.
 
 */
 
+.detailsContainer {
+    margin: 5px;
+}
+
+.book-title {
+    font-weight: bold;
+    /* Add any other styling you need here */
+    margin-bottom: 5px;
+}
+
 .book-author {
     display: block;
 }
@@ -16,17 +26,21 @@ If your plugin does not need CSS, delete this file.
     clear: both;
 }
 
-.info-container {
-    margin-right: 10px;
+.imgContainer {
     margin-top: 5px;
 }
 
+.info-container {
+    margin-right: 10px;
+    margin-top1: 5px;
+}
+
 .create-book .modal {
-	width: 600px;
+	width: 800px;
 }
 
 .create-book .setting-item-control input {
-	width: 300px;
+	width: 500px;
 }
 
 .create-book .setting-item-control textarea {
@@ -34,3 +48,6 @@ If your plugin does not need CSS, delete this file.
     width: 500px;
 }
 
+.line-break {
+    height: 10px; /* Adjust the height to control the space */
+}

@@ -32,10 +32,15 @@ export class SearchBook extends SuggestModal<Book> {
             },
             {
                 command: "↵",
-                purpose: "to open"
+                purpose: "to add"
+            },
+            {
+                command: "esc",
+                purpose: "to dismiss"
             }
         ];
         this.setInstructions(instructions)
+        this.emptyStateText = "No books found"
     }
 
     async searchBooks(query: string): Promise<Book[]> {
@@ -51,6 +56,10 @@ export class SearchBook extends SuggestModal<Book> {
 
             const data = await resSearch.json();
 
+            if (!data.items) {
+                return []
+            }
+
             // Extract relevant book information from the API response
             const books: Book[] = data.items.map((item: any) => ({
                 id: item.id,
@@ -61,7 +70,7 @@ export class SearchBook extends SuggestModal<Book> {
                 coverURL: item.volumeInfo.imageLinks?.smallThumbnail,
                 publisher: item.volumeInfo.publisher,
                 published: item.volumeInfo.publishedDate,
-                isbn: item.volumeInfo.industryIdentifiers?.map((identifier: { identifier: any; }) => `"${identifier.identifier}"`).join(','),
+                isbn: item.volumeInfo.industryIdentifiers?.map((identifier: { identifier: any; }) => `${identifier.identifier}`) || [],
                 pages: item.volumeInfo.pageCount || 0,
                 summary: item.volumeInfo.description,
                 previewLink: item.volumeInfo.previewLink,
@@ -81,15 +90,21 @@ export class SearchBook extends SuggestModal<Book> {
     async getSuggestions(query: string): Promise<Book[]> {
         // Call the `searchBooks` function to get a list of books
         await new Promise(resolve => setTimeout(resolve, 1000));
-        const books = await this.searchBooks(query);
-        return books;
+        if (query) {
+            return await this.searchBooks(query);
+        }
+        return []
     }
 
-
     renderSuggestion(book: Book, el: HTMLElement) {
-        let subtitleText = ""
-        if (book.subtitle) {
-            subtitleText = `Subtitle: ${book.subtitle}`
+        let authorsText = ""
+        if (book.authors && book.authors.length > 0) {
+            authorsText = `Authors: ${book.authors.join(', ')}`
+        }
+
+        let isbnText = ""
+        if (book.isbn && book.isbn.length > 0) {
+            isbnText = `ISBNs: ${book.isbn.join(', ')}`
         }
 
         // Container for details and image
@@ -103,26 +118,27 @@ export class SearchBook extends SuggestModal<Book> {
 
         // Create elements for book details
         const titleEl = infoContainer.createEl('div', { text: book.title, cls: 'book-title' });
-        const subtitleEl = infoContainer.createEl('div', { text: subtitleText || "", cls: 'book-author' });
-        const authorEl = infoContainer.createEl('small', { text: `Authors: ${book.authors}`, cls: 'book-author' });
+        const subtitleEl = infoContainer.createEl('div', { text: book.subtitle || "", cls: 'book-author' });
+
+        const lineBreakEl = infoContainer.createEl('div', { cls: 'line-break' });
+
+        const authorEl = infoContainer.createEl('small', { text: authorsText, cls: 'book-author' });
         const publisherEl = infoContainer.createEl('small', { text: `Publisher: ${book.publisher}`, cls: 'book-author' });
         const publishedEl = infoContainer.createEl('small', { text: `Published: ${book.published}`, cls: 'book-author' });
         const pagesEl = infoContainer.createEl('small', { text: `Pages: ${book.pages}`, cls: 'book-author' });
-        const isbnEl = infoContainer.createEl('small', { text: `ISBNs: ${book.isbn}`, cls: 'book-author' });
+        const isbnEl = infoContainer.createEl('small', { text: isbnText, cls: 'book-author' });
 
         const imgContainer = detailsContainer.createEl('div', { cls: 'img-container' });
 
         let cover = book.coverURL;
-        if (!cover) {
-            cover = "https://drupal.nypl.org/sites-drupal/default/files/blogs/sJ3CT4V.gif"
+        if (book.coverURL) {
+            const img = imgContainer.createEl('img', {
+                attr: {
+                    src: cover,
+                },
+                cls: 'cover-image',
+            });
         }
-
-        const img = imgContainer.createEl('img', {
-            attr: {
-                src: cover,
-            },
-            cls: 'cover-image',
-        });
 
         el.appendChild(detailsContainer);
     }
@@ -298,10 +314,18 @@ class CreateBook extends Modal {
         });
     }
 
+    redrawISBNList(containerEl: HTMLElement) {
+        containerEl.empty(); // Clear the existing list
+        this.book.isbn.forEach((isbn, index) => {
+            this.addISBNSetting(containerEl, index);
+        });
+    }
+
     addAuthorSetting(contentEl: HTMLElement, index: number) {
         new Setting(contentEl)
             .addText(text => text
                 .setValue(this.book.authors[index])
+                .setPlaceholder("Enter author name")
                 .onChange(async (value) => {
                     this.book.authors[index] = value; // Update the author in the array
                 })
@@ -315,6 +339,28 @@ class CreateBook extends Modal {
                             1
                         );
                         this.redrawAuthorsList(contentEl);
+                    })
+            })
+    }
+
+    addISBNSetting(contentEl: HTMLElement, index: number) {
+        new Setting(contentEl)
+            .addText(text => text
+                .setValue(this.book.isbn[index])
+                .setPlaceholder("Enter ISBN")
+                .onChange(async (value) => {
+                    this.book.isbn[index] = value; // Update the author in the array
+                })
+            )
+            .addExtraButton((cb) => {
+                cb.setIcon("cross")
+                    .setTooltip("Delete")
+                    .onClick(() => {
+                        this.book.isbn.splice(
+                            index,
+                            1
+                        );
+                        this.redrawISBNList(contentEl);
                     })
             })
     }
@@ -371,9 +417,9 @@ class CreateBook extends Modal {
             });
 
         const authorsContainer = contentEl.createEl('div');
-        const s = new Setting(authorsContainer)
+        //const s = new Setting(authorsContainer)
 
-        this.book.authors.forEach((author, index) => {
+        this.book.authors.forEach((_, index) => {
             this.addAuthorSetting(authorsContainer, index);
         });
 
@@ -407,6 +453,27 @@ class CreateBook extends Modal {
                     this.book.published = value
                 }
                 ))
+
+        new Setting(this.contentEl)
+            .setName("Add ISBN")
+            .setDesc("Add ISBN")
+            .addButton((button: ButtonComponent) => {
+                button
+                    .setTooltip("Add additional ISBN")
+                    .setButtonText("+")
+                    .setCta()
+                    .onClick(() => {
+                        this.book.isbn.push("");
+                        this.addISBNSetting(isbnContainer, this.book.isbn.length - 1);
+                    });
+            });
+
+        const isbnContainer = contentEl.createEl('div');
+        //const isbnC = new Setting(isbnContainer)
+
+        this.book.isbn.forEach((isbn, index) => {
+            this.addISBNSetting(isbnContainer, index);
+        });
 
         new Setting(contentEl)
             .setName('Rating')
@@ -551,10 +618,12 @@ where file.name = this.file.name
             state: { mode: "source" },
         });
 
-        await this.downloadImage(
-            this.book.coverURL.trim(),
-            coverFile
-        )
+        if (this.book.coverURL != undefined && this.book.coverURL != "") { 
+            await this.downloadImage(
+                this.book.coverURL.trim(),
+                coverFile
+            )
+        }
 
     }
 }
