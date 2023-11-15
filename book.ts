@@ -131,14 +131,16 @@ export class SearchBook extends SuggestModal<Book> {
         const imgContainer = detailsContainer.createEl('div', { cls: 'img-container' });
 
         let cover = book.coverURL;
-        if (book.coverURL) {
-            const img = imgContainer.createEl('img', {
-                attr: {
-                    src: cover,
-                },
-                cls: 'cover-image',
-            });
+        if (!cover) {
+            cover = "https://github.com/almariah/my-obsidian-plugin/blob/master/cover.jpg?raw=true"
         }
+
+        const img = imgContainer.createEl('img', {
+            attr: {
+                src: cover,
+            },
+            cls: 'cover-image',
+        });
 
         el.appendChild(detailsContainer);
     }
