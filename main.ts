@@ -1,5 +1,6 @@
 import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, SuggestModal, Menu, MenuItem, Instruction } from 'obsidian';
 import { SearchBook } from './book'
+import { CleanCovers } from './clean-covers'
 
 // Remember to rename these classes and interfaces!
 
@@ -27,6 +28,14 @@ export default class MyObsidianPlugin extends Plugin {
             name: 'Add Book',
             callback: () => {
                 new SearchBook(this.app).open();
+            }
+        });
+
+        this.addCommand({
+            id: 'clean-covers',
+            name: 'Clean Covers',
+            callback: () => {
+                new CleanCovers(this.app).open();
             }
         });
 
