@@ -65,8 +65,14 @@ export class CleanCovers extends Modal {
                 });
         } else {
             contentEl.createEl("p", { text: "No orphaned covers found." });
+            new Setting(contentEl)
+                .addButton(button => {
+                    button
+                        .setButtonText('Ok')
+                        .onClick(() => { this.close() })
+                });
         }
-            
+
     }
 
     onClose() {
