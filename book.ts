@@ -545,7 +545,7 @@ class CreateBook extends Modal {
 
         const newFileName = this.getBookFileUniqueName(this.fileName);
 
-        let coverFile = "Books/cover.gif"
+        let coverFile = "Books/cover.jpg"
         if (this.book.coverURL != undefined && this.book.coverURL != "") {
             coverFile = `${newFileName.substring(0, newFileName.length - 3)}.jpeg`
         }
@@ -620,7 +620,7 @@ where file.name = this.file.name
             state: { mode: "source" },
         });
 
-        if (this.book.coverURL != undefined && this.book.coverURL != "") { 
+        if (this.book.coverURL != undefined && this.book.coverURL != "") {
             await this.downloadImage(
                 this.book.coverURL.trim(),
                 coverFile

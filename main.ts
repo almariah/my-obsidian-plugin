@@ -72,8 +72,6 @@ interface State {
     nameReplace: string
 }
 
-
-
 class SampleSettingTab extends PluginSettingTab {
     plugin: MyObsidianPlugin;
 
