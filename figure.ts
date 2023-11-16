@@ -1,4 +1,4 @@
-import { App, TFile, TAbstractFile } from 'obsidian';
+import { App, TFile, TAbstractFile, Modal, Setting } from 'obsidian';
 
 export async function onFigureCreation(app: App, file: TAbstractFile): Promise<void> {
     if (!(file instanceof TFile) || file.extension !== "md") {
@@ -66,4 +66,39 @@ where file.name = this.file.name
 `
     await app.vault.modify(file, content);
 
+}
+
+export class AddFigures extends Modal {
+    result: string;
+
+    constructor(app: App) {
+        super(app);
+    }
+
+    onOpen() {
+        this.containerEl.addClass('create-figures')
+        const { contentEl } = this;
+        contentEl.createEl("h2", { text: "Create Figures Notes" });
+
+        new Setting(contentEl)
+            .addButton(button => {
+                button
+                    .setButtonText('Create Figures')
+                    .setCta()
+                    .onClick(() => {
+                        console.log("dddddd")
+                        this.close()
+                    })
+            })
+            .addButton(button => {
+                button
+                    .setButtonText('Cancel')
+                    .onClick(() => { this.close() })
+            })
+    }
+
+    onClose() {
+        let { contentEl } = this;
+        contentEl.empty();
+    }
 }

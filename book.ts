@@ -3,6 +3,8 @@ import { escapeYAMLForbiddenChars, getFileUniqueName, sanitizeFilename } from '.
 
 const GOOGLE_BOOKS_API_URL = "https://www.googleapis.com/books/v1/volumes";
 
+////  Sort options and review undefined and add missing options to book modal and search
+
 interface Book {
     id: string
     title: string;
@@ -178,7 +180,6 @@ class CreateBook extends Modal {
     }
 
     processCategories(categories1: string[], categories2: string[]) {
-        console.log(categories1, categories2)
         if (categories1 == undefined && categories2 == undefined) {
             return []
         }
@@ -328,7 +329,7 @@ class CreateBook extends Modal {
     onOpen() {
         this.containerEl.addClass('create-book')
         const { contentEl } = this;
-        this.titleEl.textContent = "Create Book Note";
+        contentEl.createEl("h2", { text: "Create Book Note" });
 
         this.fileName = `Books/${sanitizeFilename(this.book.title)}.md`
 
@@ -458,7 +459,8 @@ class CreateBook extends Modal {
         new Setting(contentEl)
             .addButton(button => {
                 button
-                    .setButtonText('Create Note')
+                    .setButtonText('Create Book Note')
+                    .setCta()
                     .onClick(() => {
                         this.createBookNote()
                         this.close()

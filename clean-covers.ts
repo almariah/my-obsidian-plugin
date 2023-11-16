@@ -53,6 +53,7 @@ export class CleanCovers extends Modal {
                 .addButton(button => {
                     button
                         .setButtonText('Confirm Delete')
+                        .setCta()
                         .onClick(async () => {
                             await this.deleteFiles(orphanedCovers);
                             this.close();
@@ -69,6 +70,7 @@ export class CleanCovers extends Modal {
                 .addButton(button => {
                     button
                         .setButtonText('Ok')
+                        .setCta()
                         .onClick(() => { this.close() })
                 });
         }

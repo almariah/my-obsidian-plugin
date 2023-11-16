@@ -1,7 +1,7 @@
 import { App, Editor, MarkdownView, Modal, TFile, Plugin, PluginSettingTab, Setting, TAbstractFile, Menu, MenuItem, Instruction } from 'obsidian';
 import { SearchBook } from './book'
+import { onFigureCreation, AddFigures } from './figure'
 import { CleanCovers } from './clean-covers'
-import { onFigureCreation } from './figure'
 
 // Remember to rename these classes and interfaces!
 
@@ -33,6 +33,14 @@ export default class MyObsidianPlugin extends Plugin {
         });
 
         this.addCommand({
+            id: 'add-figures',
+            name: 'Add Figures',
+            callback: () => {
+                new AddFigures(this.app).open();
+            }
+        });
+
+        this.addCommand({
             id: 'clean-covers',
             name: 'Clean Covers',
             callback: () => {
@@ -59,7 +67,7 @@ export default class MyObsidianPlugin extends Plugin {
         });
 
         // When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-        this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
+        // this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
 
         this.app.workspace.onLayoutReady(async () => {
             this.registerEvent(this.app.vault.on(
