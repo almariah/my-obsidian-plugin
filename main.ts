@@ -27,7 +27,7 @@ export default class MyObsidianPlugin extends Plugin {
             id: 'add-book',
             name: 'Add Book',
             callback: () => {
-                new SearchBook(this.app).open();
+                new SearchBook(this.app, "").open();
             }
         });
 
@@ -42,10 +42,9 @@ export default class MyObsidianPlugin extends Plugin {
         // @ts-ignore
         this.app.workspace.on('receive-text-menu', (menu: Menu, shareText: string) => {
             menu.addItem((item: MenuItem) => {
-                item.setTitle('Search Book');
+                item.setTitle('Add Book');
                 item.setIcon('book');
-                // item.onClick(() => { new SearchBook(this.app, shareText).open() });
-                item.onClick(() => { new SearchBook(this.app).open() });
+                item.onClick(() => { new SearchBook(this.app, shareText).open() });
             });
         }),
 
@@ -73,12 +72,6 @@ export default class MyObsidianPlugin extends Plugin {
     async saveSettings() {
         await this.saveData(this.settings);
     }
-}
-
-interface State {
-    namePattern: string
-    extPattern: string
-    nameReplace: string
 }
 
 class SampleSettingTab extends PluginSettingTab {

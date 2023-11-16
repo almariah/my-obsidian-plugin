@@ -22,7 +22,9 @@ interface Book {
 
 export class SearchBook extends SuggestModal<Book> {
 
-    constructor(app: App) {
+    defaultQuery: string
+
+    constructor(app: App, defaultQuery: string) {
         super(app);
         this.setPlaceholder("Search book by content, title, ISBN")
         const instructions = [
@@ -41,6 +43,15 @@ export class SearchBook extends SuggestModal<Book> {
         ];
         this.setInstructions(instructions)
         this.emptyStateText = "No books found"
+        this.defaultQuery = defaultQuery
+    }
+
+    onOpen() {
+        super.onOpen();
+        const input = this.inputEl;
+        if (input) {
+            input.value = this.defaultQuery;
+        }
     }
 
     async searchBooks(query: string): Promise<Book[]> {
@@ -88,8 +99,10 @@ export class SearchBook extends SuggestModal<Book> {
 
     // Returns all available suggestions.
     async getSuggestions(query: string): Promise<Book[]> {
-        // Call the `searchBooks` function to get a list of books
         await new Promise(resolve => setTimeout(resolve, 1000));
+        if (!query) {
+            query = this.inputEl.value
+        }
         if (query) {
             return await this.searchBooks(query);
         }
