@@ -1,4 +1,5 @@
 import { App, ButtonComponent, Modal, getBlobArrayBuffer, Setting, SuggestModal } from 'obsidian';
+import { escapeYAMLForbiddenChars, getFileUniqueName, sanitizeFilename } from './utils'
 
 const GOOGLE_BOOKS_API_URL = "https://www.googleapis.com/books/v1/volumes";
 
@@ -172,34 +173,8 @@ class CreateBook extends Modal {
 
     constructor(app: App, book: Book) {
         super(app);
-
         this.book = book
-
         this.fetchBookFurtherDetails();
-    }
-
-    escapeYAMLForbiddenChars(input: string) {
-        if (input == undefined) {
-            return ""
-        }
-        // Define the list of YAML forbidden characters and their escape sequences
-        const forbiddenChars: { [key: string]: string } = {
-            '\\': '\\\\',
-            '"': '\\"',
-            '\n': '\\n',
-            '\r': '\\r',
-            '\t': '\\t',
-            '\b': '\\b',
-            '\f': '\\f',
-            '\v': '\\v',
-            '\0': '\\0',
-            '\x85': '\\x85',
-            '\u2028': '\\u2028',
-            '\u2029': '\\u2029'
-        };
-
-        // Replace each forbidden character with its escape sequence
-        return input.replace(/[\\\"\n\r\t\b\f\v\0\x85\u2028\u2029]/g, match => forbiddenChars[match]);
     }
 
     processCategories(categories1: string[], categories2: string[]) {
@@ -280,7 +255,7 @@ class CreateBook extends Modal {
             this.book.tags = this.processCategories(bookV2.volumeInfo.categories, this.book.tags)
             this.book.coverURL = bookV2.volumeInfo.imageLinks?.smallThumbnail || this.book.coverURL
             this.book.publisher = bookV2.volumeInfo.publisher || this.book.publisher || ""
-            this.book.summary = this.escapeYAMLForbiddenChars(bookV2.volumeInfo.description || this.book.summary)
+            this.book.summary = escapeYAMLForbiddenChars(bookV2.volumeInfo.description || this.book.summary)
             this.book.previewLink = bookV2.volumeInfo.previewLink || this.book.previewLink
             this.book.isbn = this.handleISBN(bookV2.volumeInfo.industryIdentifiers || this.book.industryIdentifiers)
             this.book.language = this.getLanguage(this.book.language, bookV2.volumeInfo.language, this.book.title)
@@ -289,36 +264,6 @@ class CreateBook extends Modal {
             this.book.pages = bookV2.volumeInfo.pageCount || this.book.pages || 0
         } catch (error) {
             console.error("Error fetching book details:", error);
-        }
-    }
-
-    sanitizeFilename() {
-        return this.book.title.replace(/[\/#^[\]|\\:]/g, '');
-    }
-
-    getBookFileUniqueName(bookFile: string) {
-
-        let attempt = 0;
-        let exist;
-        let newFileName = ""
-
-        while (true) {
-
-            if (attempt === 0) {
-                newFileName = bookFile
-                exist = this.app.vault.getAbstractFileByPath(newFileName)
-            } else {
-                const fileParts = bookFile.split('.');
-                const baseName = fileParts[0];
-                const extension = fileParts[1];
-                newFileName = `${baseName} (${attempt}).${extension}`;
-                exist = this.app.vault.getAbstractFileByPath(newFileName)
-            }
-            if (exist) {
-                attempt++;
-            } else {
-                return newFileName
-            }
         }
     }
 
@@ -385,7 +330,7 @@ class CreateBook extends Modal {
         const { contentEl } = this;
         this.titleEl.textContent = "Create Book Note";
 
-        this.fileName = `Books/${this.sanitizeFilename()}.md`
+        this.fileName = `Books/${sanitizeFilename(this.book.title)}.md`
 
         new Setting(contentEl)
             .setName('File Name')
@@ -556,7 +501,7 @@ class CreateBook extends Modal {
 
     async createBookNote() {
 
-        const newFileName = this.getBookFileUniqueName(this.fileName);
+        const newFileName = getFileUniqueName(this.app, this.fileName);
 
         let coverFile = "Books/cover.jpg"
         if (this.book.coverURL != undefined && this.book.coverURL != "") {
