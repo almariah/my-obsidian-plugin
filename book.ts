@@ -1,4 +1,4 @@
-import { App, ButtonComponent, Modal, getBlobArrayBuffer, Setting, SuggestModal } from 'obsidian';
+import { App, ButtonComponent, Modal, getBlobArrayBuffer, Setting, SuggestModal, Notice } from 'obsidian';
 import { escapeYAMLForbiddenChars, getFileUniqueName, sanitizeFilename } from './utils'
 
 const GOOGLE_BOOKS_API_URL = "https://www.googleapis.com/books/v1/volumes";
@@ -331,6 +331,25 @@ class CreateBook extends Modal {
         const { contentEl } = this;
         contentEl.createEl("h2", { text: "Create Book Note" });
 
+        const coverElement = contentEl.createEl('img', {
+            attr: {
+                src: this.book.coverURL || "https://github.com/almariah/my-obsidian-plugin/blob/master/cover.jpg?raw=true",
+            },
+            cls: 'cover-image-create',
+        });
+
+        new Setting(contentEl)
+            .setName('Cover URL')
+            .setDesc('Enter book cover image URL')
+            .addText(text => text
+                .setValue(this.book.coverURL)
+                .setPlaceholder("Enter book cover image URL")
+                .onChange(async (value) => {
+                    this.book.coverURL = value
+                    coverElement.src = value || "https://github.com/almariah/my-obsidian-plugin/blob/master/cover.jpg?raw=true";
+                }
+                ))
+
         this.fileName = `Books/${sanitizeFilename(this.book.title)}.md`
 
         new Setting(contentEl)
@@ -378,7 +397,6 @@ class CreateBook extends Modal {
             });
 
         const authorsContainer = contentEl.createEl('div');
-        //const s = new Setting(authorsContainer)
 
         this.book.authors.forEach((_, index) => {
             this.addAuthorSetting(authorsContainer, index);
@@ -447,21 +465,19 @@ class CreateBook extends Modal {
                 ))
 
         new Setting(contentEl)
-            .setName('Cover')
-            .setDesc('Book cover')
-            .addText(text => text
-                .setValue(this.book.coverURL)
-                .onChange(async (value) => {
-                    this.book.coverURL = value
-                }
-                ))
-
-        new Setting(contentEl)
             .addButton(button => {
                 button
                     .setButtonText('Create Book Note')
                     .setCta()
                     .onClick(() => {
+                        if (this.book.authors.some(author => author.trim() === "")) {
+                            new Notice("author name can not be empty");
+                            return
+                        }
+                        if (this.book.isbn.some(isbn => isbn.trim() === "")) {
+                            new Notice("ISBN can not be empty");
+                            return
+                        }
                         this.createBookNote()
                         this.close()
                     })

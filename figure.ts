@@ -1,4 +1,6 @@
-import { App, TFile, TAbstractFile, Modal, Setting } from 'obsidian';
+import { App, TFile, TAbstractFile, Modal, Setting, ButtonComponent, Notice } from 'obsidian';
+import { getFileUniqueName } from './utils'
+import { connected } from 'process';
 
 export async function onFigureCreation(app: App, file: TAbstractFile): Promise<void> {
     if (!(file instanceof TFile) || file.extension !== "md") {
@@ -69,10 +71,38 @@ where file.name = this.file.name
 }
 
 export class AddFigures extends Modal {
-    result: string;
+
+    figures: string[] = [];
+    createButton: ButtonComponent;
 
     constructor(app: App) {
         super(app);
+    }
+
+    redrawFigureList(containerEl: HTMLElement) {
+        containerEl.empty();
+        this.figures.forEach((_, index) => {
+            this.addFigureSetting(containerEl, index);
+        });
+    }
+
+    addFigureSetting(contentEl: HTMLElement, index: number) {
+        new Setting(contentEl)
+            .addText(text => text
+                .setValue(this.figures[index])
+                .setPlaceholder("Enter figure name")
+                .onChange(async (value) => {
+                    this.figures[index] = value;
+                })
+            )
+            .addExtraButton((cb) => {
+                cb.setIcon("cross")
+                    .setTooltip("Delete")
+                    .onClick(() => {
+                        this.figures.splice(index, 1);
+                        this.redrawFigureList(contentEl);
+                    })
+            })
     }
 
     onOpen() {
@@ -80,15 +110,40 @@ export class AddFigures extends Modal {
         const { contentEl } = this;
         contentEl.createEl("h2", { text: "Create Figures Notes" });
 
+        new Setting(this.contentEl)
+            .setName("Add Figure")
+            .setDesc("Add Figure")
+            .addButton((button: ButtonComponent) => {
+                button
+                    .setTooltip("Add additional figure")
+                    .setButtonText("+")
+                    .setCta()
+                    .onClick(() => {
+                        this.figures.push("");
+                        this.addFigureSetting(figuresContainer, this.figures.length - 1);
+                    });
+            });
+
+        const figuresContainer = contentEl.createEl('div');
+
         new Setting(contentEl)
             .addButton(button => {
                 button
                     .setButtonText('Create Figures')
                     .setCta()
                     .onClick(() => {
-                        console.log("dddddd")
+                        if (this.figures.length === 0) {
+                            new Notice("add at least one figure");
+                            return
+                        }
+                        if (this.figures.some(figure => figure.trim() === "")) {
+                            new Notice("figure name can not be empty");
+                            return
+                        }
+                        this.createFigures()
                         this.close()
-                    })
+                    });
+                this.createButton = button
             })
             .addButton(button => {
                 button
@@ -100,5 +155,13 @@ export class AddFigures extends Modal {
     onClose() {
         let { contentEl } = this;
         contentEl.empty();
+    }
+
+    async createFigures() {
+        for (const figure of this.figures) {
+            const figureFile = `Figures/${figure}.md`
+            const newFileName = getFileUniqueName(this.app, figureFile);
+            this.app.vault.create(newFileName, "")
+        }
     }
 }
