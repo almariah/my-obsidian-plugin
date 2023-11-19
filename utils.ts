@@ -24,8 +24,7 @@ export function escapeYAMLForbiddenChars(input: string) {
     return input.replace(/[\\\"\n\r\t\b\f\v\0\x85\u2028\u2029]/g, match => forbiddenChars[match]);
 }
 
-export  function getFileUniqueName(app: App, fileName: string) {
-
+export function getFileUniqueName(app: App, fileName: string) {
     let attempt = 0;
     let exist;
     let newFileName = ""
@@ -52,4 +51,13 @@ export  function getFileUniqueName(app: App, fileName: string) {
 
 export function sanitizeFilename(filename: string) {
     return filename.replace(/[\/#^[\]|\\:]/g, '');
+}
+
+export function getDate() {
+    const nowDate = new Date();
+    return [
+        nowDate.getFullYear(),
+        (nowDate.getMonth() + 1).toString().padStart(2, '0'),
+        nowDate.getDate().toString().padStart(2, '0')
+    ].join('-');
 }

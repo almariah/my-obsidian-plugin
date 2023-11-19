@@ -1,4 +1,4 @@
-import { App, TFile, Modal } from "obsidian";
+import { App, TFile, Modal, Setting } from "obsidian";
 
 export class BlockRefCleaner extends Modal {
     cleanedRefs: string[] = [];
@@ -13,6 +13,9 @@ export class BlockRefCleaner extends Modal {
 
         // Collect all block references
         for (const file of files) {
+            if (file.basename.endsWith('.excalidraw')) {
+                continue;
+            }
             const content = await this.app.vault.read(file);
             const blockRefs = this.extractBlockRefs(content);
             blockRefs.forEach(ref => {
@@ -48,6 +51,14 @@ export class BlockRefCleaner extends Modal {
                 list.createEl('li').textContent = ref;
             });
         }
+
+        new Setting(this.contentEl)
+                .addButton(button => {
+                    button
+                        .setButtonText('Ok')
+                        .setCta()
+                        .onClick(() => { this.close() })
+                });
 
         this.open(); // Open the modal
     }

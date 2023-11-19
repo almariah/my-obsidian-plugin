@@ -1,8 +1,9 @@
 import { App, Plugin, PluginSettingTab, Setting, TAbstractFile, Menu, MenuItem } from 'obsidian';
 import { SearchBook } from './book'
-import { onFigureCreation, AddFigures } from './figure'
 import { CleanCovers } from './clean-covers'
 import { BlockRefCleaner } from './clean-block-ref'
+import { onFigureCreation, AddFigures } from './figure'
+import { AddPost, onPostCreation } from 'post';
 
 // Remember to rename these classes and interfaces!
 
@@ -42,6 +43,14 @@ export default class MyObsidianPlugin extends Plugin {
         });
 
         this.addCommand({
+            id: 'add-post',
+            name: 'Add Post',
+            callback: () => {
+                new AddPost(this.app).open();
+            }
+        });
+
+        this.addCommand({
             id: 'clean-covers',
             name: 'Clean Covers',
             callback: () => {
@@ -73,9 +82,9 @@ export default class MyObsidianPlugin extends Plugin {
 
         // If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
         // Using this function will automatically remove the event listener when this plugin is disabled.
-        this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
-            console.log('click', evt);
-        });
+        //this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
+        //    console.log('click', evt);
+        //});
 
         // When registering intervals, this function will automatically clear the interval when the plugin is disabled.
         // this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
@@ -84,6 +93,12 @@ export default class MyObsidianPlugin extends Plugin {
             this.registerEvent(this.app.vault.on(
                 "create",
                 (file: TAbstractFile) => onFigureCreation(this.app, file)
+            ));
+        })
+        this.app.workspace.onLayoutReady(async () => {
+            this.registerEvent(this.app.vault.on(
+                "create",
+                (file: TAbstractFile) => onPostCreation(this.app, file)
             ));
         })
     }

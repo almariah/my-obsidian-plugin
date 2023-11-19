@@ -1,5 +1,5 @@
 import { App, TFile, TAbstractFile, Modal, Setting, ButtonComponent, Notice } from 'obsidian';
-import { getFileUniqueName } from './utils'
+import { getDate, getFileUniqueName } from './utils'
 
 export async function onFigureCreation(app: App, file: TAbstractFile): Promise<void> {
     if (!(file instanceof TFile) || file.extension !== "md") {
@@ -15,18 +15,13 @@ export async function onFigureCreation(app: App, file: TAbstractFile): Promise<v
     const title = file.basename
     let notes = "Notes"
     let lang = "English"
-    var arabicRegex = /[\u0600-\u06FF]/;
+    const arabicRegex = /[\u0600-\u06FF]/;
     if (arabicRegex.test(title)) {
         notes = "ملحوظات"
         lang = "العربية"
     }
 
-    var nowDate = new Date();
-    var date = [
-        nowDate.getFullYear(),
-        (nowDate.getMonth() + 1).toString().padStart(2, '0'),
-        nowDate.getDate().toString().padStart(2, '0')
-    ].join('-');
+    const date = getDate()
 
     const content = `---
 aliases:
@@ -109,7 +104,7 @@ export class AddFigures extends Modal {
         const { contentEl } = this;
         contentEl.createEl("h2", { text: "Create Figures Notes" });
 
-        new Setting(this.contentEl)
+        new Setting(contentEl)
             .setName("Add Figure")
             .setDesc("Add Figure")
             .addButton((button: ButtonComponent) => {

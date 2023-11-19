@@ -1,5 +1,5 @@
 import { App, ButtonComponent, Modal, getBlobArrayBuffer, Setting, SuggestModal, Notice } from 'obsidian';
-import { escapeYAMLForbiddenChars, getFileUniqueName, sanitizeFilename } from './utils'
+import { escapeYAMLForbiddenChars, getDate, getFileUniqueName, sanitizeFilename } from './utils'
 
 const GOOGLE_BOOKS_API_URL = "https://www.googleapis.com/books/v1/volumes";
 
@@ -207,7 +207,7 @@ class CreateBook extends Modal {
     }
 
     getLanguage(lang1: string, lang2: string, title: string) {
-        var arabicRegex = /[\u0600-\u06FF]/;
+        const arabicRegex = /[\u0600-\u06FF]/;
         if (arabicRegex.test(title)) {
             return "ar"
         }
@@ -382,7 +382,7 @@ class CreateBook extends Modal {
                 }
                 ))
 
-        new Setting(this.contentEl)
+        new Setting(contentEl)
             .setName("Add Author")
             .setDesc("Add Author")
             .addButton((button: ButtonComponent) => {
@@ -433,7 +433,7 @@ class CreateBook extends Modal {
                 }
                 ))
 
-        new Setting(this.contentEl)
+        new Setting(contentEl)
             .setName("Add ISBN")
             .setDesc("Add ISBN")
             .addButton((button: ButtonComponent) => {
@@ -536,12 +536,7 @@ class CreateBook extends Modal {
             this.book.tags.push("English")
         }
 
-        const nowDate = new Date();
-        const date = [
-            nowDate.getFullYear(),
-            (nowDate.getMonth() + 1).toString().padStart(2, '0'),
-            nowDate.getDate().toString().padStart(2, '0')
-        ].join('-');
+        const date = getDate()
 
         const bookContent = `---
 aliases:
