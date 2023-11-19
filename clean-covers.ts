@@ -20,7 +20,7 @@ export class CleanCovers extends Modal {
                 // Check if the markdown file exists
                 const mdFileExists = files.some(f => f.path === markdownFilePath);
 
-                if (!mdFileExists) {
+                if (!mdFileExists && file.path != "Books/cover.jpg") {
                     orphanedCovers.push(file.path);
                 }
             }

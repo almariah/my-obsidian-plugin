@@ -1,6 +1,5 @@
 import { App, TFile, TAbstractFile, Modal, Setting, ButtonComponent, Notice } from 'obsidian';
 import { getFileUniqueName } from './utils'
-import { connected } from 'process';
 
 export async function onFigureCreation(app: App, file: TAbstractFile): Promise<void> {
     if (!(file instanceof TFile) || file.extension !== "md") {

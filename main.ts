@@ -1,7 +1,8 @@
-import { App, Editor, MarkdownView, Modal, TFile, Plugin, PluginSettingTab, Setting, TAbstractFile, Menu, MenuItem, Instruction } from 'obsidian';
+import { App, Plugin, PluginSettingTab, Setting, TAbstractFile, Menu, MenuItem } from 'obsidian';
 import { SearchBook } from './book'
 import { onFigureCreation, AddFigures } from './figure'
 import { CleanCovers } from './clean-covers'
+import { BlockRefCleaner } from './clean-block-ref'
 
 // Remember to rename these classes and interfaces!
 
@@ -48,6 +49,16 @@ export default class MyObsidianPlugin extends Plugin {
             }
         });
 
+
+        this.addCommand({
+            id: 'clean-block-ref',
+            name: 'Clean Block REF',
+            callback: () => {
+                const blockRefFinder = new BlockRefCleaner(this.app);
+                blockRefFinder.cleanUnusedBlockRefs();
+            },
+        })
+
         // @ts-ignore
         this.app.workspace.on('receive-text-menu', (menu: Menu, shareText: string) => {
             menu.addItem((item: MenuItem) => {
@@ -72,8 +83,7 @@ export default class MyObsidianPlugin extends Plugin {
         this.app.workspace.onLayoutReady(async () => {
             this.registerEvent(this.app.vault.on(
                 "create",
-                (file: TAbstractFile) =>
-                onFigureCreation(this.app, file)
+                (file: TAbstractFile) => onFigureCreation(this.app, file)
             ));
         })
     }
