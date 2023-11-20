@@ -80,7 +80,7 @@ export class BlockRefCleaner extends Modal {
 	}
 
     async deleteBlockRef(blockRef: string, filePaths: string[]): Promise<void> {
-        const refPattern = new RegExp(`\\s\\^${blockRef}$`, 'gm');
+        const refPattern = new RegExp(`(^\s*$\n)?\\s*\\^${blockRef}$`, 'gm');
 
         for (const filePath of filePaths) {
             const file = this.app.vault.getAbstractFileByPath(filePath);
