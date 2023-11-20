@@ -38,6 +38,60 @@ export class BlockRefCleaner extends Modal {
         this.showCleanedRefsModal();
     }
 
+    extractBlockRefs(content: string): string[] {
+        const regex = /.*\s\^([^\s\[\]]+)$/gm;
+        let match;
+        let blockRefs: string[] = [];
+
+        while ((match = regex.exec(content)) !== null) {
+            blockRefs.push(match[1]);
+        }
+
+        return blockRefs;
+    }
+
+    getLinkedMentions(blockRef: string, files: TFile[]): string[] {
+        let linkedMentions: string[] = [];
+        const blockRefSuffix = `#^${blockRef}`;
+
+        for (const file of files) {
+            const allLinks = this.app.metadataCache.getFileCache(file)?.links || [];
+            if (allLinks.some(link => link.link.endsWith(blockRefSuffix))) {
+                linkedMentions.push(file.path);
+            }
+        }
+        return linkedMentions;
+    }
+
+    // will use in future in case of performance issues
+    // need to find a way to to get subpath block (^REF)
+    // and compare it with blockRef
+	getLinkedMentions_1(blockRef: string) {
+		const allFiles = this.app.metadataCache.resolvedLinks;
+		let linkedMentions: Array<string> = [];
+
+        console.log(allFiles)
+
+		Object.keys(allFiles).forEach((key) => {
+			//console.log(allFiles[key])
+		});
+
+		return linkedMentions.sort();
+	}
+
+    async deleteBlockRef(blockRef: string, filePaths: string[]): Promise<void> {
+        const refPattern = new RegExp(`\\s\\^${blockRef}$`, 'gm');
+
+        for (const filePath of filePaths) {
+            const file = this.app.vault.getAbstractFileByPath(filePath);
+            if (file instanceof TFile) {
+                let content = await this.app.vault.read(file);
+                // Replace the pattern (space + ^blockRef at the end of a line) with an empty string
+                const newContent = content.replace(refPattern, '');
+                await this.app.vault.modify(file, newContent);
+            }
+        }
+    }
 
     showCleanedRefsModal() {
         this.contentEl.empty(); // Clear any existing content in the modal
@@ -61,45 +115,5 @@ export class BlockRefCleaner extends Modal {
                 });
 
         this.open(); // Open the modal
-    }
-
-    getLinkedMentions(blockRef: string, files: TFile[]): string[] {
-        let linkedMentions: string[] = [];
-        const blockRefSuffix = `#^${blockRef}`;
-
-        for (const file of files) {
-            const allLinks = this.app.metadataCache.getFileCache(file)?.links || [];
-            if (allLinks.some(link => link.link.endsWith(blockRefSuffix))) {
-                linkedMentions.push(file.path);
-            }
-        }
-
-        return linkedMentions;
-    }
-
-    async deleteBlockRef(blockRef: string, filePaths: string[]): Promise<void> {
-        const refPattern = new RegExp(`\\s\\^${blockRef}$`, 'gm');
-
-        for (const filePath of filePaths) {
-            const file = this.app.vault.getAbstractFileByPath(filePath);
-            if (file instanceof TFile) {
-                let content = await this.app.vault.read(file);
-                // Replace the pattern (space + ^blockRef at the end of a line) with an empty string
-                const newContent = content.replace(refPattern, '');
-                await this.app.vault.modify(file, newContent);
-            }
-        }
-    }
-
-    extractBlockRefs(content: string): string[] {
-        const regex = /.*\s\^([^\s\[\]]+)$/gm;
-        let match;
-        let blockRefs: string[] = [];
-
-        while ((match = regex.exec(content)) !== null) {
-            blockRefs.push(match[1]);
-        }
-
-        return blockRefs;
     }
 }
