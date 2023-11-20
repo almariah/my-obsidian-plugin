@@ -65,3 +65,45 @@ If your plugin does not need CSS, delete this file.
 .cover-image {
     max-width: 128px;
 }
+
+
+
+
+.book-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: white; /* White background */
+    border: 1px solid #d1d1d1; /* Grey border */
+    border-radius: 8px; /* Rounded corners */
+    padding: 10px; /* Padding inside the card */
+    margin: 10px 0; /* Margin outside the card */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+    transition: background-color 0.3s; /* Smooth transition for background color */
+}
+
+.book-card:hover {
+    background-color: #f3f3f3; /* Light grey background on hover */
+}
+
+.book-card h3 {
+    margin-top: 0; /* Remove top margin from title */
+}
+
+.book-card p {
+    color: #555555; /* Lighter text color for the description */
+    font-size: 0.9em; /* Slightly smaller font size for the description */
+}
+
+.book-title-link {
+    text-decoration: none; /* No underline on the title link */
+    color: inherit; /* Inherits color from parent elements */
+}
+
+.book-cover-image {
+    max-width: 128px; /* Adjust as needed */
+    max-height: 164px;
+    /*height: auto; /* Maintain aspect ratio */
+    /* Other styling properties */
+}
+

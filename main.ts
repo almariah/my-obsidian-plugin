@@ -4,6 +4,7 @@ import { CleanCovers } from './clean-covers'
 import { BlockRefCleaner } from './clean-block-ref'
 import { onFigureCreation, AddFigures } from './figure'
 import { AddPost, onPostCreation } from 'post';
+import { BooksRender } from 'books-render';
 
 // Remember to rename these classes and interfaces!
 
@@ -20,6 +21,12 @@ export default class MyObsidianPlugin extends Plugin {
 
     async onload() {
         await this.loadSettings();
+
+
+        this.registerMarkdownCodeBlockProcessor('books', async (source, el, ctx) => {
+            let render = new BooksRender(this.app);
+            await render.run(source, el, ctx);
+        });
 
         // This adds a status bar item to the bottom of the app. Does not work on mobile apps.
         const statusBarItemEl = this.addStatusBarItem();
