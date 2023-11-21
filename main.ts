@@ -1,4 +1,4 @@
-import { App, Plugin, PluginSettingTab, Setting, TAbstractFile, Menu, MenuItem } from 'obsidian';
+import { App, Plugin, PluginSettingTab, Setting, TAbstractFile, Platform, Menu, MenuItem } from 'obsidian';
 import { SearchBook } from './book'
 import { CleanCovers } from './clean-covers'
 import { BlockRefCleaner } from './clean-block-ref'
@@ -6,6 +6,8 @@ import { onFigureCreation, AddFigures } from './figure'
 import { onArticleCreation, AddArticle } from './article'
 import { AddPost, onPostCreation } from 'post';
 import { FolderRender } from 'folder-render';
+
+import { YoutubeDownloader } from './youtube'
 
 // Remember to rename these classes and interfaces!
 
@@ -81,6 +83,14 @@ export default class MyObsidianPlugin extends Plugin {
             callback: () => {
                 const blockRefFinder = new BlockRefCleaner(this.app);
                 blockRefFinder.cleanUnusedBlockRefs();
+            },
+        })
+
+        this.addCommand({
+            id: 'youtube',
+            name: 'youtube',
+            callback: () => {
+                new YoutubeDownloader(this.app).open();
             },
         })
 
