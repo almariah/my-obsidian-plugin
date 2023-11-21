@@ -89,7 +89,8 @@
 }
 
 .folder-card:hover {
-    background-color: #f3f3f3;
+    background-color1: #f3f3f3;
+    background-color: rgb(0 0 0 / 0.07)
 }
 
 .folder-card h3 {
@@ -97,7 +98,7 @@
 }
 
 .folder-card p {
-    color: #555555;
+    color1: #555555;
     font-size: 0.9em;
 }
 
