@@ -21,31 +21,49 @@ export class FolderRender {
         }
 
         const folderPath = yaml.folderPath
-        const tags: string[] = yaml.tags
+        const tags: string[] = yaml.tags || []
 
         let pathList = await this.app.vault.adapter.list(folderPath);
         const subFolderList = pathList.folders;
         const subFileList = pathList.files;
 
-        for (var i = 0; i < subFileList.length; i++) {
-            var subFilePath = subFileList[i];
+        var mappedAndSortedFiles = subFileList.map(subFilePath => {
+            let abstractFile = this.app.vault.getAbstractFileByPath(subFilePath);
+            if (abstractFile instanceof TFile) {
+                let metadata = this.app.metadataCache.getFileCache(abstractFile)?.frontmatter;
+                let date = this.parseBirthDate(metadata?.birth_date);
+                let hasDesiredTag = tags.every((tag: string) => (metadata?.tags || []).includes(tag));
+                return { subFilePath, date, valid: hasDesiredTag };
+            }
+            return { subFilePath, date: 0, valid: false };
+        }).filter(file => file.valid)
+            .sort((a, b) => a.date - b.date);
+
+        for (var i = 0; i < mappedAndSortedFiles.length; i++) {
+            var { subFilePath } = mappedAndSortedFiles[i];
             if (!subFilePath.endsWith('.md')) continue;
 
             let file = this.app.vault.getAbstractFileByPath(subFilePath);
-            if (file && file instanceof TFile) {
+            if (file instanceof TFile) {
                 const metadata = this.app.metadataCache.getFileCache(file)?.frontmatter;
-
-                // Check if metadata contains any of the specific tags
                 if (metadata) {
-                    //if (metadata && metadata.tags && tags.some(tag => metadata.tags.includes(tag))) {
-                    const card = this.createCard(metadata, file.basename)
+                    const card = this.createCard(folderPath, metadata, file.basename)
                     el.appendChild(card);
                 }
             }
         }
     }
 
-    createCard(metadata: FrontMatterCache, basename: string): HTMLElement {
+    parseBirthDate(birthDate: string) {
+        if (!birthDate) return 0;
+        let year = parseInt(birthDate);
+        if (birthDate.includes('BC')) {
+            year = -year;
+        }
+        return year;
+    }
+
+    createCard(folder: string, metadata: FrontMatterCache, basename: string): HTMLElement {
         const cardEl = document.createElement('div');
         cardEl.className = 'folder-card';
 
@@ -55,7 +73,7 @@ export class FolderRender {
         cardEl.appendChild(cardContentEl);
 
         if (this.app.workspace.activeLeaf) {
-            MarkdownRenderer.renderMarkdown(`### [[Books/${basename}.md|${basename}]]`, cardContentEl, '', this.app.workspace.activeLeaf.view)
+            MarkdownRenderer.renderMarkdown(`### [[${folder}/${basename}.md|${basename}]]`, cardContentEl, '', this.app.workspace.activeLeaf.view)
         }
 
         let titleMD = ''
@@ -108,7 +126,7 @@ export class FolderRender {
         }
         if (this.app.workspace.activeLeaf) {
             MarkdownRenderer.renderMarkdown(figureMD, cardContentEl, '', this.app.workspace.activeLeaf.view);
-        }  
+        }
 
         let statusMD = ''
         if (metadata && metadata.status) {
