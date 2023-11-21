@@ -3,6 +3,7 @@ import { SearchBook } from './book'
 import { CleanCovers } from './clean-covers'
 import { BlockRefCleaner } from './clean-block-ref'
 import { onFigureCreation, AddFigures } from './figure'
+import { onArticleCreation, AddArticle } from './article'
 import { AddPost, onPostCreation } from 'post';
 import { FolderRender } from 'folder-render';
 
@@ -58,6 +59,14 @@ export default class MyObsidianPlugin extends Plugin {
         });
 
         this.addCommand({
+            id: 'add-article',
+            name: 'Add Article',
+            callback: () => {
+                new AddArticle(this.app).open();
+            }
+        });
+
+        this.addCommand({
             id: 'clean-covers',
             name: 'Clean Covers',
             callback: () => {
@@ -106,6 +115,12 @@ export default class MyObsidianPlugin extends Plugin {
             this.registerEvent(this.app.vault.on(
                 "create",
                 (file: TAbstractFile) => onPostCreation(this.app, file)
+            ));
+        })
+        this.app.workspace.onLayoutReady(async () => {
+            this.registerEvent(this.app.vault.on(
+                "create",
+                (file: TAbstractFile) => onArticleCreation(this.app, file)
             ));
         })
     }

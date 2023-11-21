@@ -1,71 +1,54 @@
 import { App, TFile, Notice, TAbstractFile, Modal, Setting } from 'obsidian';
 import { getDate, getFileUniqueName } from './utils'
 
-export async function onPostCreation(app: App, file: TAbstractFile): Promise<void> {
+export async function onArticleCreation(app: App, file: TAbstractFile): Promise<void> {
     if (!(file instanceof TFile) || file.extension !== "md") {
         return;
     }
 
-    if (file.parent?.path != "Blog/posts") {
+    if (file.parent?.path != "Articles") {
         return
     }
 
     await sleep(500);
 
     const title = file.basename
-    let tags = ["English"]
-    let dir = "ltr"
-    let locale = "default"
-    let comments = "en"
-    let otherPostsHeading = "Other posts"
-    let otherPostTags = ["English"]
-    let tocHeading = "On this page"
     let intro = "Introduction"
-
+    let lang = "English"
     const arabicRegex = /[\u0600-\u06FF]/;
     if (arabicRegex.test(title)) {
-        tags = ["العربية"]
-        dir = "rtl"
-        locale = "ar-Eg"
-        comments = "ar"
-        otherPostsHeading = "مقالات أخرى"
-        otherPostTags = ["العربية"]
-        tocHeading = "المحتويات"
         intro = "مقدمة"
+        lang = "العربية"
     }
 
     const date = getDate()
 
     const content = `---
-share: false
 aliases:
-type: Post
+type: Article
 title: ${title}
-date: ${date}
-tags: [${tags.toString()}]
-
-dir: ${dir}
-locale: ${locale}
-toc_heading: ${tocHeading}
-comments: ${comments}
-other_posts_heading: ${otherPostsHeading}
-other_posts_limit: 10
-other_posts: [${otherPostTags.toString()}]
-
+subtitle:
+authors:
+tags: [${lang}]
+publisher:
+published:
+links:
 created: ${date}
-status:
+status: Unread
 status_updated:
 summary:
-cssclasses: disable-count
+cssclass: disable-count
 ---
 \`\`\`dataview
-table without id file.mday as Updated
-from "Blog/posts"
+table WITHOUT ID
+map(authors, (item) => link("Figures/"+item)) as Authors,
+file.cday as Updated
+from "Articles"
 where file.name = this.file.name
 \`\`\`
 \`\`\`dataview
 table WITHOUT ID summary as Summary
-from "Blog/posts"
+from "Articles"
 where file.name = this.file.name
 \`\`\`
 
@@ -73,9 +56,10 @@ where file.name = this.file.name
 
 `
     await app.vault.modify(file, content);
+
 }
 
-export class AddPost extends Modal {
+export class AddArticle extends Modal {
     title: string = "";
 
     constructor(app: App) {
@@ -83,30 +67,30 @@ export class AddPost extends Modal {
     }
 
     onOpen() {
-        this.containerEl.addClass('create-post')
+        this.containerEl.addClass('create-article')
         const { contentEl } = this;
-        contentEl.createEl("h2", { text: "Create Post" });
+        contentEl.createEl("h2", { text: "Create Article" });
 
         new Setting(contentEl)
-            .setName("Post Title")
+            .setName("Article Title")
             .addText((text) =>
                 text.onChange((value) => {
                     this.title = value
                 })
-            .setPlaceholder("Enter post title")
+            .setPlaceholder("Enter article title")
             );
 
         new Setting(contentEl)
             .addButton(button => {
                 button
-                    .setButtonText('Create Post')
+                    .setButtonText('Create Article')
                     .setCta()
                     .onClick(() => {
                         if (this.title === "") {
-                            new Notice("add post title");
+                            new Notice("add article title");
                             return
                         }
-                        this.createPost()
+                        this.createArticle()
                         this.close()
                     });
             })
@@ -118,9 +102,9 @@ export class AddPost extends Modal {
 
     }
 
-    async createPost() {
-        const postFile = `Blog/posts/${this.title}.md`
-        const newFileName = getFileUniqueName(this.app, postFile);
+    async createArticle() {
+        const articleFile = `Articles/${this.title}.md`
+        const newFileName = getFileUniqueName(this.app, articleFile);
         let created = await this.app.vault.create(newFileName, "")
 
         const active_leaf = this.app.workspace.activeLeaf;

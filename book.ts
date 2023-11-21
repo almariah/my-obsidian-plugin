@@ -134,7 +134,7 @@ export class SearchBook extends SuggestModal<Book> {
 
         // Create elements for book details
         const titleEl = infoContainer.createEl('div', { text: book.title, cls: 'book-title' });
-        const subtitleEl = infoContainer.createEl('div', { text: book.subtitle || "", cls: 'book-author' });
+        const subtitleEl = infoContainer.createEl('div', { text: book.subtitle || "", cls: 'book-subtitle' });
 
         const lineBreakEl = infoContainer.createEl('div', { cls: 'line-break' });
 
