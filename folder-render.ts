@@ -38,14 +38,14 @@ export class FolderRender {
                 // Check if metadata contains any of the specific tags
                 if (metadata) {
                     //if (metadata && metadata.tags && tags.some(tag => metadata.tags.includes(tag))) {
-                    const card = this.createCard(file, metadata, subFilePath)
+                    const card = this.createCard(metadata, file.basename)
                     el.appendChild(card);
                 }
             }
         }
     }
 
-    createCard(file: TFile, metadata: FrontMatterCache, titleLink: string): HTMLElement {
+    createCard(metadata: FrontMatterCache, basename: string): HTMLElement {
         const cardEl = document.createElement('div');
         cardEl.className = 'folder-card';
 
@@ -55,11 +55,19 @@ export class FolderRender {
         cardEl.appendChild(cardContentEl);
 
         if (this.app.workspace.activeLeaf) {
-            MarkdownRenderer.renderMarkdown(`### [[${titleLink}|${file.basename}]]`, cardContentEl, '', this.app.workspace.activeLeaf.view)
+            MarkdownRenderer.renderMarkdown(`### [[Books/${basename}.md|${basename}]]`, cardContentEl, '', this.app.workspace.activeLeaf.view)
         }
 
-        if (this.app.workspace.activeLeaf && metadata && metadata.subtitle) {
-            MarkdownRenderer.renderMarkdown(`*${metadata.subtitle}*`, cardContentEl, '', this.app.workspace.activeLeaf.view)
+        let titleMD = ''
+        if (metadata && metadata.title) {
+            titleMD = `**${metadata.title}**`
+        }
+        if (metadata && metadata.subtitle) {
+            titleMD = `${titleMD}
+*${metadata.subtitle}*`
+        }
+        if (this.app.workspace.activeLeaf) {
+            MarkdownRenderer.renderMarkdown(titleMD, cardContentEl, '', this.app.workspace.activeLeaf.view)
         }
 
         //const createdEl = document.createElement('p');
@@ -81,6 +89,26 @@ export class FolderRender {
                 MarkdownRenderer.renderMarkdown(authorLinks, cardContentEl, '', this.app.workspace.activeLeaf.view);
             }
         }
+
+        let figureMD = ""
+        if (metadata && metadata.birth_date) {
+            figureMD = `**Birth date:** ${metadata.birth_date}`
+        }
+        if (metadata && metadata.death_date) {
+            figureMD = `${figureMD}
+**Death date:** ${metadata.death_date}`
+        }
+        if (metadata && metadata.birth_place) {
+            figureMD = `${figureMD}
+**Birth place:** ${metadata.birth_place}`
+        }
+        if (metadata && metadata.death_place) {
+            figureMD = `${figureMD}
+**Death place:** ${metadata.death_place}`
+        }
+        if (this.app.workspace.activeLeaf) {
+            MarkdownRenderer.renderMarkdown(figureMD, cardContentEl, '', this.app.workspace.activeLeaf.view);
+        }  
 
         let statusMD = ''
         if (metadata && metadata.status) {

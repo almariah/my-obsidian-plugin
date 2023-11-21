@@ -87,14 +87,39 @@
 }
 
 .folder-cover-image {
-    max-width: 128px; /* Adjust as needed */
-    max-height: 164px;
+    max-width: 150px; /* Adjust as needed */
+    max-height: 200px;
     /*height: auto; /* Maintain aspect ratio */
     /* Other styling properties */
+}
+
+.folder-card-content {
+    padding-right: 16px;
+    /* Content comes after the image */
+    /* ... other styles ... */
 }
 
 .folder-card-content .tag {
     white-space: nowrap;
     padding-bottom: 2px;
     padding-top: 2px;
+}
+
+@media screen and (max-width: 960px) {
+    .folder-card {
+        flex-direction: column; /* Stack items vertically */
+        align-items: flex-start; /* Align items to the start */
+    }
+
+    .folder-cover-image {
+        order: 1;
+        mmax-width: 100%; /* Full width of the card */
+        mmax-height: none; /* Remove max height constraint */
+        margin-bottom: 10px; /* Add some space between image and content */
+    }
+    
+    .folder-card-content {
+        order: 2;
+        width: 100%; /* Full width of the card */
+    }
 }
