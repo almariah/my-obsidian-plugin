@@ -4,7 +4,7 @@ import { CleanCovers } from './clean-covers'
 import { BlockRefCleaner } from './clean-block-ref'
 import { onFigureCreation, AddFigures } from './figure'
 import { AddPost, onPostCreation } from 'post';
-import { BooksRender } from 'books-render';
+import { FolderRender } from 'folder-render';
 
 // Remember to rename these classes and interfaces!
 
@@ -23,8 +23,8 @@ export default class MyObsidianPlugin extends Plugin {
         await this.loadSettings();
 
 
-        this.registerMarkdownCodeBlockProcessor('books', async (source, el, ctx) => {
-            let render = new BooksRender(this.app);
+        this.registerMarkdownCodeBlockProcessor('folder', async (source, el, ctx) => {
+            let render = new FolderRender(this.app);
             await render.run(source, el, ctx);
         });
 
