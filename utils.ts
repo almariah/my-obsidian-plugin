@@ -1,5 +1,9 @@
 import { App } from 'obsidian';
 
+export function escapeRegExp(str: string) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 export function escapeYAMLForbiddenChars(input: string) {
     if (input == undefined) {
         return ""

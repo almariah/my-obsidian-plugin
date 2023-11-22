@@ -87,8 +87,8 @@ export default class MyObsidianPlugin extends Plugin {
         })
 
         this.addCommand({
-            id: 'youtube',
-            name: 'youtube',
+            id: 'download-youtube-videos',
+            name: 'Download YouTube Videos',
             callback: () => {
                 new YoutubeDownloader(this.app).open();
             },

@@ -144,3 +144,7 @@
         width: 100%; /* Full width of the card */
     }
 }
+
+.youtube .modal {
+    width: 800px;
+}
