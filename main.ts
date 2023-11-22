@@ -1,4 +1,4 @@
-import { App, Plugin, PluginSettingTab, Setting, TAbstractFile, Platform, Menu, MenuItem } from 'obsidian';
+import { App, Plugin, PluginSettingTab, Setting, TAbstractFile, Platform, Menu, MenuItem, Notice } from 'obsidian';
 import { SearchBook } from './book'
 import { CleanCovers } from './clean-covers'
 import { BlockRefCleaner } from './clean-block-ref'
@@ -90,6 +90,10 @@ export default class MyObsidianPlugin extends Plugin {
             id: 'download-youtube-videos',
             name: 'Download YouTube Videos',
             callback: () => {
+                if (!Platform.isDesktop) {
+                    new Notice('Video download is available only on the desktop platform.');
+                    return
+                }
                 new YoutubeDownloader(this.app).open();
             },
         })

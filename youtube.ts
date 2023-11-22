@@ -14,12 +14,6 @@ export class YoutubeDownloader extends Modal {
     }
 
     async onOpen() {
-
-        if (Platform.isDesktop) {
-            new Notice('Video download is available only on the desktop platform.');
-            return
-        }
-
         this.containerEl.addClass('youtube')
         const { contentEl } = this;
 
@@ -34,78 +28,54 @@ export class YoutubeDownloader extends Modal {
         this.originalFileContent = await this.app.vault.read(this.activeFile);
 
         const urls = await this.extractYoutubeUrlsFromActiveFile();
-
         if (!urls.length) {
             contentEl.createEl("p", { text: "No YouTube videos found." });
             return
         }
 
-        if (urls && urls.length) {
-            for (let index = 0; index < urls.length; index++) {
-                const url = urls[index];
-                this.createProgressBar(url);
-                this.downloadVideoToObsidian(url);
+        for (let index = 0; index < urls.length; index++) {
+            const url = urls[index];
+            const videoPath = `_media/videos/${this.getVideoID(url)}.mp4`
+            const exist = this.app.vault.getAbstractFileByPath(videoPath)
+            if (exist) {
+                await this.replaceIframeWithLink(url, `![[${videoPath}]]`);
+                this.createAlreadyExistVideo(url)
+                continue
             }
+            this.createProgressBar(url);
+            this.downloadVideoToObsidian(url, videoPath);
         }
-
     }
 
-    onClose() {
-
-        for (const url of this.ongoingDownloads) {
-            // Cancel ongoing downloads by removing them from the ongoingDownloads set
-            this.ongoingDownloads.delete(url);
-            new Notice(`Download: "${url}" have been canceled!`)
+    getVideoID(url: string) {
+        if (url.includes('https://www.youtube-nocookie.com/embed/')) {
+            return url.replace("https://www.youtube-nocookie.com/embed/", "");
         }
+        return new URL(url).searchParams.get('v');
+    }
 
-        let { contentEl } = this;
-        contentEl.empty();
-        this.progressBars.clear();
+    createAlreadyExistVideo(fileName: string) {
+        new Setting(this.contentEl)
+            .setName(`Already existing: ${fileName}`)
     }
 
     createProgressBar(fileName: string) {
         new Setting(this.contentEl)
             .setName(`Downloading: ${fileName}`)
             .addProgressBar((progressBar) => {
-                // Logic to initialize and update the progress bar
-                // You can store the progressBar reference in this.progressBars if needed
-                progressBar.setValue(0); // Initialize with 0
-                //progressBar.setIndeterminate(false); // Set if the progress is determinate or indeterminate
-    
-                // Store the progressBar reference to update it later
+                progressBar.setValue(0);
                 this.progressBars.set(fileName, progressBar);
             });
     }
 
     async extractYoutubeUrlsFromActiveFile() {
-        if (!this.activeFile) {
-            new Notice('No active file selected.');
-            return [];
-        }
-
-        const fileContent = await this.app.vault.read(this.activeFile);
-
-        //const urlMatches = [...fileContent.matchAll(/<iframe.*?src="(https:\/\/www\.youtube-nocookie\.com\/embed\/[^"]+)"/g)];
-
         const urlMatches = [
-            ...fileContent.matchAll(/<iframe.*?src="(https:\/\/www\.youtube-nocookie\.com\/embed\/[^"]+)"/g),
-            ...fileContent.matchAll(/!\[.*?\]\((https:\/\/youtu\.be\/[^)]+)\)/g),
-            ...fileContent.matchAll(/!\[.*?\]\((https:\/\/www\.youtube\.com\/watch\?v=[^)]+)\)/g)
+            ...this.originalFileContent.matchAll(/<iframe.*?src="(https:\/\/www\.youtube-nocookie\.com\/embed\/[^"]+)"/g),
+            ...this.originalFileContent.matchAll(/!\[.*?\]\((https:\/\/youtu\.be\/[^)]+)\)/g),
+            ...this.originalFileContent.matchAll(/!\[.*?\]\((https:\/\/www\.youtube\.com\/watch\?v=[^)]+)\)/g)
         ];
 
-        if (urlMatches.length) {
-            return urlMatches.map(match => {
-                if (match[1].includes('youtube-nocookie.com/embed')) {
-                    // Convert embed URL to watch URL for iframe links
-                    //return this.convertEmbedUrlToWatchUrl(match[1]);
-                    return match[1];
-                } else {
-                    // Use the URL directly for Markdown image syntax links
-                    return match[1];
-                }
-            });
-        }
-        return []
+        return urlMatches.map(match => match[1]);
     }
 
     convertEmbedUrlToWatchUrl(embedUrl: string) {
@@ -113,8 +83,7 @@ export class YoutubeDownloader extends Modal {
         return `https://www.youtube.com/watch?v=${videoId}`;
     }
 
-    async downloadVideoToObsidian(url: string) {
-        // Check if the platform is desktop
+    async downloadVideoToObsidian(url: string, videoPath: string) {
         if (Platform.isDesktop) {
             try {
                 // Dynamically import the ytdl-core module
@@ -135,8 +104,6 @@ export class YoutubeDownloader extends Modal {
                 if (!this.activeFile) {
                     return;
                 }
-
-                const videoPath = `_media/videos/${this.activeFile.basename} (${this.getVideoID(url)}).mp4`;
 
                 // Add the URL to ongoingDownloads
                 this.ongoingDownloads.add(url);
@@ -180,13 +147,6 @@ export class YoutubeDownloader extends Modal {
         }
     }
 
-    getVideoID(url: string) {
-        if (url.includes('https://www.youtube-nocookie.com/embed/')) {
-            return url.replace("https://www.youtube-nocookie.com/embed/", "");
-        }
-        return new URL(url).searchParams.get('v');
-    }
-
     async replaceIframeWithLink(originalUrl: string, markdownLink: string) {
         if (originalUrl.includes('youtube-nocookie.com/embed')) {
             this.originalFileContent = this.originalFileContent.replace(
@@ -198,11 +158,21 @@ export class YoutubeDownloader extends Modal {
                 new RegExp(`!\\[.*\\]\\(${escapeRegExp(originalUrl)}\\)`, 'g'),
                 markdownLink
             );
-
         }
-
         if (this.activeFile) {
             await this.app.vault.modify(this.activeFile, this.originalFileContent);
         }
+    }
+
+    onClose() {
+        for (const url of this.ongoingDownloads) {
+            // Cancel ongoing downloads by removing them from the ongoingDownloads set
+            this.ongoingDownloads.delete(url);
+            new Notice(`Download: "${url}" have been canceled!`)
+        }
+
+        let { contentEl } = this;
+        contentEl.empty();
+        this.progressBars.clear();
     }
 }
