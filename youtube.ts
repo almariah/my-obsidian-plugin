@@ -1,9 +1,9 @@
-import { Platform, App, Notice, Modal, Setting, TFile } from 'obsidian';
+import { Platform, App, Notice, Modal, Setting, TFile, ProgressBarComponent } from 'obsidian';
 
 import { escapeRegExp } from 'utils';
 
 export class YoutubeDownloader extends Modal {
-    progressBars: Map<string, HTMLProgressElement>;
+    progressBars: Map<string, ProgressBarComponent>;
     originalFileContent: string;
     activeFile: TFile | null;
     ongoingDownloads: Set<string> = new Set();
@@ -14,6 +14,12 @@ export class YoutubeDownloader extends Modal {
     }
 
     async onOpen() {
+
+        if (Platform.isDesktop) {
+            new Notice('Video download is available only on the desktop platform.');
+            return
+        }
+
         this.containerEl.addClass('youtube')
         const { contentEl } = this;
 
@@ -58,15 +64,17 @@ export class YoutubeDownloader extends Modal {
     }
 
     createProgressBar(fileName: string) {
-        this.contentEl.createEl('li', { text: ` Downloading: ${fileName} ` });
-
-        const progressBar = this.contentEl.createEl("progress", {
-            attr: {
-                max: 100,
-                value: 0,
-            },
-        });
-        this.progressBars.set(fileName, progressBar);
+        new Setting(this.contentEl)
+            .setName(`Downloading: ${fileName}`)
+            .addProgressBar((progressBar) => {
+                // Logic to initialize and update the progress bar
+                // You can store the progressBar reference in this.progressBars if needed
+                progressBar.setValue(0); // Initialize with 0
+                //progressBar.setIndeterminate(false); // Set if the progress is determinate or indeterminate
+    
+                // Store the progressBar reference to update it later
+                this.progressBars.set(fileName, progressBar);
+            });
     }
 
     async extractYoutubeUrlsFromActiveFile() {
@@ -148,7 +156,7 @@ export class YoutubeDownloader extends Modal {
                     const progress = (downloaded / totalSize) * 100;
                     const progressBar = this.progressBars.get(url);
                     if (progressBar) {
-                        progressBar.value = progress;
+                        progressBar.setValue(progress);
                     }
                 });
 
@@ -163,14 +171,12 @@ export class YoutubeDownloader extends Modal {
                     await this.replaceIframeWithLink(url, `![[${videoPath}]]`);
                     const progressBar = this.progressBars.get(url);
                     if (progressBar) {
-                        progressBar.value = 100;
+                        progressBar.setValue(100);
                     }
                 });
             } catch (error) {
                 console.error('Error downloading video:', error);
             }
-        } else {
-            new Notice('Video download is available only on the desktop platform.');
         }
     }
 
