@@ -1,8 +1,141 @@
-/*
+.folder-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: white;
+    border: 1px solid #d1d1d1;
+    border-radius: 8px;
+    padding: 10px;
+    margin: 10px 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s;
+}
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
+.folder-card-content {
+    padding-right: 16px;
+}
 
-If your plugin does not need CSS, delete this file.
+.folder-card-content .tag {
+    white-space: nowrap;
+    padding-bottom: 2px;
+    padding-top: 2px;
+}
 
-*/
+.folder-cover-image {
+    max-width: 150px;
+    max-height: 200px;
+    min-width: 128x;
+}
+
+.folder-card:hover {
+    background-color: rgb(0 0 0 / 0.07)
+}
+
+.folder-card h3 {
+    margin-top: 0;
+}
+
+.folder-card p {
+    font-size: 0.9em;
+}
+
+@media screen and (max-width: 960px) {
+    .folder-card {
+        flex-direction: column; /* Stack items vertically */
+        align-items: flex-start; /* Align items to the start */
+    }
+
+    .folder-card-content {
+        order: 2;
+        width: 100%; /* Full width of the card */
+    }
+
+    .folder-cover-image {
+        order: 1;
+        margin-bottom: 10px; /* Add some space between image and content */
+    }
+}
+
+.book-details-container {
+    margin-top: 5px;
+    margin-bottom: 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start
+}
+
+.book-info-container {
+    margin-right: 10px;
+}
+
+.book-title {
+    font-weight: bold;
+}
+
+.book-subtitle {
+    font-style: italic;
+}
+
+.book-line-break {
+    height: 10px;
+}
+
+.book-property {
+    display: block;
+}
+
+.book-cover-image {
+    max-width: 128px;
+    min-width: 128px;
+}
+
+.create-book .modal {
+    width: 800px;
+}
+
+.create-book .setting-item-control input {
+    width: 500px;
+}
+
+.create-book .setting-item-control textarea {
+    height: 12rem;
+    width: 500px;
+}
+
+.create-book-cover {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 10px;
+    max-width: 128px;
+}
+
+.create-article .modal {
+    width: 800px;
+}
+
+.create-article .setting-item-control input {
+    width: 500px;
+}
+
+.create-note .modal {
+    width: 800px;
+}
+
+.create-note .setting-item-control input {
+    width: 500px;
+}
+
+.create-post .modal {
+    width: 800px;
+}
+
+.create-post .setting-item-control input {
+    width: 500px;
+}
+
+.cover-image-input {
+    display: block;
+    width: 500px;
+    margin-bottom: 10px;
+}
