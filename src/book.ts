@@ -547,7 +547,7 @@ form:
 links:
 created: ${date}
 status: Unread
-status_updated:
+status_updated: ${date}
 summary: "${this.book.summary}"
 cover: ${coverFile}
 cssclass: disable-count

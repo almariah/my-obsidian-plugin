@@ -31,6 +31,8 @@ subtitle:
 tags: [${lang}]
 links:
 created: ${date}
+status:
+status_updated: ${date}
 summary:
 cssclass: disable-count
 ---

@@ -35,7 +35,7 @@ death_place:
 links:
 created: ${date}
 status:
-status_updated:
+status_updated: ${date}
 summary:
 image:
 cssclass: disable-count

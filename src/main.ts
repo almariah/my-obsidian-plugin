@@ -15,7 +15,6 @@ export default class MyObsidianPlugin extends Plugin {
             await render.run(source, el, ctx);
         });
 
-
         // add book command
         this.addCommand({
             id: 'add-book',
@@ -24,7 +23,6 @@ export default class MyObsidianPlugin extends Plugin {
                 new SearchBook(this.app, "").open();
             }
         });
-
 
         // add search books for share menu
         // @ts-ignore

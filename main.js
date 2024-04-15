@@ -6769,7 +6769,7 @@ form:
 links:
 created: ${date}
 status: Unread
-status_updated:
+status_updated: ${date}
 summary: "${this.book.summary}"
 cover: ${coverFile}
 cssclass: disable-count
@@ -6842,7 +6842,7 @@ death_place:
 links:
 created: ${date}
 status:
-status_updated:
+status_updated: ${date}
 summary:
 image:
 cssclass: disable-count
@@ -6967,7 +6967,7 @@ published:
 links:
 created: ${date}
 status: Unread
-status_updated:
+status_updated: ${date}
 summary:
 cssclass: disable-count
 ---
@@ -7064,6 +7064,8 @@ subtitle:
 tags: [${lang}]
 links:
 created: ${date}
+status:
+status_updated: ${date}
 summary:
 cssclass: disable-count
 ---
@@ -7177,7 +7179,7 @@ other_posts_limit: 10
 other_posts: [${lang}]
 created: ${date}
 status:
-status_updated:
+status_updated: ${date}
 summary:
 cssclasses: disable-count
 ---

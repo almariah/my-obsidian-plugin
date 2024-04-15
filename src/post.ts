@@ -50,7 +50,7 @@ other_posts_limit: 10
 other_posts: [${lang}]
 created: ${date}
 status:
-status_updated:
+status_updated: ${date}
 summary:
 cssclasses: disable-count
 ---
