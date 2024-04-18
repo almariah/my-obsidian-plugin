@@ -83,3 +83,43 @@ export async function downloadImage(url: string, path: string) {
     }
 
 }
+
+export function unixTimeToDateString(unixTime: number) {
+    // Create a new Date object using the Unix time
+    const date = new Date(unixTime);
+
+    // Define an array of month names
+    const monthNames = [
+      "January", "February", "March", "April", "May", "June", "July",
+      "August", "September", "October", "November", "December"
+    ];
+
+    // Extract the components of the date
+    const monthIndex = date.getMonth();
+    const day = date.getDate();
+    const year = date.getFullYear();
+
+    // Format the date as desired
+    const formattedDate = `${monthNames[monthIndex]} ${day}, ${year}`;
+
+    return formattedDate;
+}
+
+export function trans(lang: string, lookup: string) {
+    if (lang === "العربية") {
+        if (lookup === "Summary") return "ملخص"
+        if (lookup === "Authors") return "المؤلفون"
+        if (lookup === "Birth Date") return "تاريخ الميلاد"
+        if (lookup === "Death Date") return "تاريخ الوفاة"
+        if (lookup === "Birth Place") return "مكان الولادة"
+        if (lookup === "Death Place") return "مكان الوفاة"
+        if (lookup === "Last Updated") return "آخر تحديث"
+        if (lookup === "Introduction") return "مقدمة"
+        if (lookup === "Reviews") return "مراجعات"
+        if (lookup === "Notes") return "ملحوظات"
+        if (lookup === "Other posts") return "مقالات أخرى"
+        if (lookup === "On this page") return "المحتويات"
+        return lookup
+    }
+    return lookup
+}

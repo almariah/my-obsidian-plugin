@@ -1,5 +1,5 @@
 import { App, TFile, Notice, TAbstractFile, Modal, Setting } from 'obsidian';
-import { getDate, getFileUniqueName } from './utils'
+import { getDate, getFileUniqueName, trans } from './utils'
 
 export async function onPostCreation(app: App, file: TAbstractFile): Promise<void> {
     if (!(file instanceof TFile) || file.extension !== "md") {
@@ -13,23 +13,18 @@ export async function onPostCreation(app: App, file: TAbstractFile): Promise<voi
     await sleep(500);
 
     const title = file.basename
-    let secIntro = "Introduction"
+
+
     let lang = "English"
     let comments = "en"
-    let dir = "ltr"
+    let direction = "ltr"
     let locale = "default"
-    let otherPostsHeading = "Other posts"
-    let tocHeading = "On this page"
-
     const arabicRegex = /[\u0600-\u06FF]/;
     if (arabicRegex.test(title)) {
-        secIntro = "مقدمة"
         lang = "العربية"
         comments = "ar"
-        dir = "rtl"
+        direction = "rtl"
         locale = "ar-Eg"
-        otherPostsHeading = "مقالات أخرى"
-        tocHeading = "المحتويات"
     }
 
     const date = getDate()
@@ -41,31 +36,20 @@ type: Post
 title: ${title}
 date: ${date}
 tags: [${lang}]
-dir: ${dir}
+direction: ${direction}
 locale: ${locale}
-toc_heading: ${tocHeading}
+toc_heading: ${trans(lang, "On this page")}
 comments: ${comments}
-other_posts_heading: ${otherPostsHeading}
+other_posts_heading: ${trans(lang, "Other posts")}
 other_posts_limit: 10
 other_posts: [${lang}]
 created: ${date}
 status:
 status_updated: ${date}
 summary:
-cssclasses: disable-count
 ---
-\`\`\`dataview
-table without id file.mday as Updated
-from "Blog/posts"
-where file.name = this.file.name
-\`\`\`
-\`\`\`dataview
-table WITHOUT ID summary as Summary
-from "Blog/posts"
-where file.name = this.file.name
-\`\`\`
 
-## ${secIntro}
+## ${trans(lang, "Introduction")}
 
 `
     await app.vault.modify(file, content);

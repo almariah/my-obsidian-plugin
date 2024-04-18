@@ -27,7 +27,7 @@ __export(main_exports, {
   default: () => MyObsidianPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian9 = require("obsidian");
+var import_obsidian10 = require("obsidian");
 
 // src/folder-render.ts
 var import_obsidian = require("obsidian");
@@ -6311,7 +6311,7 @@ var FolderRender = class {
   }
 };
 
-// src/book.ts
+// src/metadata-render.ts
 var import_obsidian3 = require("obsidian");
 
 // src/utils.ts
@@ -6385,10 +6385,177 @@ async function downloadImage(url, path) {
     throw new Error(`Could not download cover "${url}" to path "${path}": ${error}`);
   }
 }
+function unixTimeToDateString(unixTime) {
+  const date = new Date(unixTime);
+  const monthNames = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December"
+  ];
+  const monthIndex = date.getMonth();
+  const day = date.getDate();
+  const year = date.getFullYear();
+  const formattedDate = `${monthNames[monthIndex]} ${day}, ${year}`;
+  return formattedDate;
+}
+function trans(lang, lookup) {
+  if (lang === "\u0627\u0644\u0639\u0631\u0628\u064A\u0629") {
+    if (lookup === "Summary")
+      return "\u0645\u0644\u062E\u0635";
+    if (lookup === "Authors")
+      return "\u0627\u0644\u0645\u0624\u0644\u0641\u0648\u0646";
+    if (lookup === "Birth Date")
+      return "\u062A\u0627\u0631\u064A\u062E \u0627\u0644\u0645\u064A\u0644\u0627\u062F";
+    if (lookup === "Death Date")
+      return "\u062A\u0627\u0631\u064A\u062E \u0627\u0644\u0648\u0641\u0627\u0629";
+    if (lookup === "Birth Place")
+      return "\u0645\u0643\u0627\u0646 \u0627\u0644\u0648\u0644\u0627\u062F\u0629";
+    if (lookup === "Death Place")
+      return "\u0645\u0643\u0627\u0646 \u0627\u0644\u0648\u0641\u0627\u0629";
+    if (lookup === "Last Updated")
+      return "\u0622\u062E\u0631 \u062A\u062D\u062F\u064A\u062B";
+    if (lookup === "Introduction")
+      return "\u0645\u0642\u062F\u0645\u0629";
+    if (lookup === "Reviews")
+      return "\u0645\u0631\u0627\u062C\u0639\u0627\u062A";
+    if (lookup === "Notes")
+      return "\u0645\u0644\u062D\u0648\u0638\u0627\u062A";
+    if (lookup === "Other posts")
+      return "\u0645\u0642\u0627\u0644\u0627\u062A \u0623\u062E\u0631\u0649";
+    if (lookup === "On this page")
+      return "\u0627\u0644\u0645\u062D\u062A\u0648\u064A\u0627\u062A";
+    return lookup;
+  }
+  return lookup;
+}
+
+// src/metadata-render.ts
+var MetadataRender = class {
+  constructor(app) {
+    this.lang = "English";
+    this.app = app;
+  }
+  async run(el, ctx) {
+    if (!el.children) {
+      return;
+    }
+    if (!el.children[0]) {
+      return;
+    }
+    if (el.children[0].className !== "frontmatter") {
+      return;
+    }
+    const metadata = ctx.frontmatter;
+    const arabicRegex = /[\u0600-\u06FF]/;
+    if (metadata && metadata.title) {
+      if (arabicRegex.test(metadata.title)) {
+        this.lang = "\u0627\u0644\u0639\u0631\u0628\u064A\u0629";
+      }
+    }
+    if (metadata && metadata.name) {
+      if (arabicRegex.test(metadata.name)) {
+        this.lang = "\u0627\u0644\u0639\u0631\u0628\u064A\u0629";
+      }
+    }
+    if (metadata) {
+      const card = this.createCard("xxxx", metadata, "xxx");
+      el.appendChild(card);
+    }
+    if (metadata && metadata.summary) {
+      if (this.app.workspace.activeLeaf) {
+        import_obsidian3.MarkdownRenderer.renderMarkdown(`**${trans(this.lang, "Summary")}**: ${metadata.summary}
+___`, el, "", this.app.workspace.activeLeaf.view);
+      }
+    }
+  }
+  createCard(folder, metadata, basename) {
+    const cardEl = document.createElement("div");
+    cardEl.className = "folder-card";
+    const cardContentEl = document.createElement("div");
+    cardContentEl.className = "folder-card-content";
+    cardEl.appendChild(cardContentEl);
+    let titleMD = "";
+    if (metadata && metadata.title) {
+      titleMD = `**${metadata.title}**`;
+    }
+    if (metadata && metadata.subtitle) {
+      titleMD = `${titleMD}
+*${metadata.subtitle}*`;
+    }
+    if (this.app.workspace.activeLeaf) {
+      import_obsidian3.MarkdownRenderer.renderMarkdown(titleMD, cardContentEl, "", this.app.workspace.activeLeaf.view);
+    }
+    if (metadata && metadata.name) {
+      if (this.app.workspace.activeLeaf) {
+        import_obsidian3.MarkdownRenderer.renderMarkdown(`**${metadata.name}**`, cardContentEl, "", this.app.workspace.activeLeaf.view);
+      }
+    }
+    if (metadata && metadata.authors) {
+      let authorLinks = `**${trans(this.lang, "Authors")}:**
+`;
+      metadata.authors.forEach((author, index) => {
+        const authorLink = `* [[Figures/${author}.md|${author}]]
+`;
+        authorLinks += authorLink;
+      });
+      if (this.app.workspace.activeLeaf) {
+        import_obsidian3.MarkdownRenderer.renderMarkdown(authorLinks, cardContentEl, "", this.app.workspace.activeLeaf.view);
+      }
+    }
+    let figureMD = "";
+    if (metadata && metadata.birth_date) {
+      figureMD = `**${trans(this.lang, "Birth Date")}:** ${metadata.birth_date}`;
+    }
+    if (metadata && metadata.death_date) {
+      figureMD = `${figureMD}
+**${trans(this.lang, "Death Date")}:** ${metadata.death_date}`;
+    }
+    if (metadata && metadata.birth_place) {
+      figureMD = `${figureMD}
+**${trans(this.lang, "Birth Place")}:** ${metadata.birth_place}`;
+    }
+    if (metadata && metadata.death_place) {
+      figureMD = `${figureMD}
+**${trans(this.lang, "Death Place")}:** ${metadata.death_place}`;
+    }
+    if (this.app.workspace.activeLeaf) {
+      import_obsidian3.MarkdownRenderer.renderMarkdown(figureMD, cardContentEl, "", this.app.workspace.activeLeaf.view);
+    }
+    const activeFile = this.app.workspace.getActiveFile();
+    if (activeFile == null ? void 0 : activeFile.stat.mtime) {
+      if (this.app.workspace.activeLeaf) {
+        const d = unixTimeToDateString(activeFile.stat.mtime);
+        const updated = `**${trans(this.lang, "Last Updated")}:** ${d}`;
+        import_obsidian3.MarkdownRenderer.renderMarkdown(updated, cardContentEl, "", this.app.workspace.activeLeaf.view);
+      }
+    }
+    if (metadata && metadata.cover) {
+      const coverImagePath = metadata.cover;
+      const coverImageFile = this.app.vault.getAbstractFileByPath(coverImagePath);
+      if (coverImageFile instanceof import_obsidian3.TFile) {
+        const coverImageEl = document.createElement("img");
+        coverImageEl.src = this.app.vault.getResourcePath(coverImageFile);
+        coverImageEl.className = "folder-cover-image";
+        cardEl.appendChild(coverImageEl);
+      }
+    }
+    return cardEl;
+  }
+};
 
 // src/book.ts
+var import_obsidian4 = require("obsidian");
 var GOOGLE_BOOKS_API_URL = "https://www.googleapis.com/books/v1/volumes";
-var SearchBook = class extends import_obsidian3.SuggestModal {
+var SearchBook = class extends import_obsidian4.SuggestModal {
   constructor(app, defaultQuery) {
     super(app);
     this.setPlaceholder("Search book by content, title, ISBN");
@@ -6505,7 +6672,7 @@ var SearchBook = class extends import_obsidian3.SuggestModal {
     new CreateBook(this.app, book).open();
   }
 };
-var CreateBook = class extends import_obsidian3.Modal {
+var CreateBook = class extends import_obsidian4.Modal {
   constructor(app, book) {
     super(app);
     this.book = book;
@@ -6541,7 +6708,7 @@ var CreateBook = class extends import_obsidian3.Modal {
   getLanguage(lang1, lang2, title) {
     const arabicRegex = /[\u0600-\u06FF]/;
     if (arabicRegex.test(title)) {
-      return "ar";
+      return "\u0627\u0644\u0639\u0631\u0628\u064A\u0629";
     }
     return lang2 || lang1 || "en";
   }
@@ -6610,7 +6777,7 @@ var CreateBook = class extends import_obsidian3.Modal {
     });
   }
   addAuthorSetting(contentEl, index) {
-    new import_obsidian3.Setting(contentEl).addText(
+    new import_obsidian4.Setting(contentEl).addText(
       (text) => text.setValue(this.book.authors[index]).setPlaceholder("Enter author name").onChange(async (value) => {
         this.book.authors[index] = value;
       })
@@ -6625,7 +6792,7 @@ var CreateBook = class extends import_obsidian3.Modal {
     });
   }
   addISBNSetting(contentEl, index) {
-    new import_obsidian3.Setting(contentEl).addText(
+    new import_obsidian4.Setting(contentEl).addText(
       (text) => text.setValue(this.book.isbn[index]).setPlaceholder("Enter ISBN").onChange(async (value) => {
         this.book.isbn[index] = value;
       })
@@ -6649,29 +6816,29 @@ var CreateBook = class extends import_obsidian3.Modal {
       },
       cls: "create-book-cover"
     });
-    new import_obsidian3.Setting(contentEl).setName("Cover URL").setDesc("Enter book cover image URL").addText((text) => text.setValue(this.book.coverURL).setPlaceholder("Enter book cover image URL").onChange(
+    new import_obsidian4.Setting(contentEl).setName("Cover URL").setDesc("Enter book cover image URL").addText((text) => text.setValue(this.book.coverURL).setPlaceholder("Enter book cover image URL").onChange(
       async (value) => {
         this.book.coverURL = value;
         coverElement.src = value || "https://github.com/almariah/my-obsidian-plugin/blob/master/cover.jpg?raw=true";
       }
     ));
     this.fileName = `Books/${sanitizeFilename(this.book.title)}.md`;
-    new import_obsidian3.Setting(contentEl).setName("File Name").setDesc("Enter book file name").addText((text) => text.setValue(this.fileName).onChange(
+    new import_obsidian4.Setting(contentEl).setName("File Name").setDesc("Enter book file name").addText((text) => text.setValue(this.fileName).onChange(
       async (value) => {
         this.fileName = value;
       }
     ));
-    new import_obsidian3.Setting(contentEl).setName("Title").setDesc("Book title").addText((text) => text.setValue(this.book.title).onChange(
+    new import_obsidian4.Setting(contentEl).setName("Title").setDesc("Book title").addText((text) => text.setValue(this.book.title).onChange(
       async (value) => {
         this.book.title = value;
       }
     ));
-    new import_obsidian3.Setting(contentEl).setName("Subtitle").setDesc("Book subtitle").addText((text) => text.setValue(this.book.subtitle).onChange(
+    new import_obsidian4.Setting(contentEl).setName("Subtitle").setDesc("Book subtitle").addText((text) => text.setValue(this.book.subtitle).onChange(
       async (value) => {
         this.book.subtitle = value;
       }
     ));
-    new import_obsidian3.Setting(contentEl).setName("Authors").setDesc("Add author").addButton((button) => {
+    new import_obsidian4.Setting(contentEl).setName("Authors").setDesc("Add author").addButton((button) => {
       button.setTooltip("Add additional author").setButtonText("+").setCta().onClick(() => {
         this.book.authors.push("");
         this.addAuthorSetting(authorsContainer, this.book.authors.length - 1);
@@ -6681,22 +6848,22 @@ var CreateBook = class extends import_obsidian3.Modal {
     this.book.authors.forEach((_, index) => {
       this.addAuthorSetting(authorsContainer, index);
     });
-    new import_obsidian3.Setting(contentEl).setName("Pages").setDesc("Book pages").addText((text) => text.setValue(this.book.pages.toString()).onChange(
+    new import_obsidian4.Setting(contentEl).setName("Pages").setDesc("Book pages").addText((text) => text.setValue(this.book.pages.toString()).onChange(
       async (value) => {
         this.book.pages = Number(value);
       }
     ));
-    new import_obsidian3.Setting(contentEl).setName("Publisher").setDesc("Book publisher").addText((text) => text.setValue(this.book.publisher).onChange(
+    new import_obsidian4.Setting(contentEl).setName("Publisher").setDesc("Book publisher").addText((text) => text.setValue(this.book.publisher).onChange(
       async (value) => {
         this.book.publisher = value;
       }
     ));
-    new import_obsidian3.Setting(contentEl).setName("Published at").setDesc("Book published at").addMomentFormat((text) => text.setDefaultFormat("YYYY-MM-DD").setValue(this.book.published).onChange(
+    new import_obsidian4.Setting(contentEl).setName("Published at").setDesc("Book published at").addMomentFormat((text) => text.setDefaultFormat("YYYY-MM-DD").setValue(this.book.published).onChange(
       async (value) => {
         this.book.published = value;
       }
     ));
-    new import_obsidian3.Setting(contentEl).setName("Add ISBN").setDesc("Add ISBN").addButton((button) => {
+    new import_obsidian4.Setting(contentEl).setName("Add ISBN").setDesc("Add ISBN").addButton((button) => {
       button.setTooltip("Add additional ISBN").setButtonText("+").setCta().onClick(() => {
         this.book.isbn.push("");
         this.addISBNSetting(isbnContainer, this.book.isbn.length - 1);
@@ -6706,19 +6873,19 @@ var CreateBook = class extends import_obsidian3.Modal {
     this.book.isbn.forEach((isbn, index) => {
       this.addISBNSetting(isbnContainer, index);
     });
-    new import_obsidian3.Setting(contentEl).setName("Rating").setDesc("Book rating").addText((text) => text.setValue(this.book.rating.toString()).onChange(
+    new import_obsidian4.Setting(contentEl).setName("Rating").setDesc("Book rating").addText((text) => text.setValue(this.book.rating.toString()).onChange(
       async (value) => {
         this.book.rating = Number(value);
       }
     ));
-    new import_obsidian3.Setting(contentEl).addButton((button) => {
+    new import_obsidian4.Setting(contentEl).addButton((button) => {
       button.setButtonText("Create Book Note").setCta().onClick(() => {
         if (this.book.authors.some((author) => author.trim() === "")) {
-          new import_obsidian3.Notice("Author name can not be empty!");
+          new import_obsidian4.Notice("Author name can not be empty!");
           return;
         }
         if (this.book.isbn.some((isbn) => isbn.trim() === "")) {
-          new import_obsidian3.Notice("ISBN can not be empty!");
+          new import_obsidian4.Notice("ISBN can not be empty!");
           return;
         }
         this.createBookNote();
@@ -6740,14 +6907,14 @@ var CreateBook = class extends import_obsidian3.Modal {
     if (this.book.coverURL != void 0 && this.book.coverURL != "") {
       coverFile = `${newFileName.substring(0, newFileName.length - 3)}.jpeg`;
     }
-    let noteSecReviews = "Reviews";
-    let noteSecNotes = "Notes";
-    if (this.book.language == "ar") {
-      this.book.tags.push("\u0627\u0644\u0639\u0631\u0628\u064A\u0629");
-      noteSecReviews = "\u0645\u0631\u0627\u062C\u0639\u0627\u062A";
-      noteSecNotes = "\u0645\u0644\u062D\u0648\u0638\u0627\u062A";
-    } else if (this.book.language == "en") {
+    if (this.book.language === "en") {
       this.book.tags.push("English");
+    } else {
+      this.book.tags.push(this.book.language);
+    }
+    let direction = "ltr";
+    if (this.book.language === "\u0627\u0644\u0639\u0631\u0628\u064A\u0629") {
+      direction = "rtl";
     }
     const date = getDate();
     const bookContent = `---
@@ -6772,24 +6939,12 @@ status: Unread
 status_updated: ${date}
 summary: "${this.book.summary}"
 cover: ${coverFile}
-cssclass: disable-count
+direction: ${direction}
 ---
-\`\`\`dataview
-table WITHOUT ID embed(link(cover, "150")) as Cover,
-map(authors, (item) => link("Figures/"+item)) as Authors,
-file.mday as Updated
-from "Books"
-where file.name = this.file.name
-\`\`\`
-\`\`\`dataview
-table WITHOUT ID summary as Summary
-from "Books"
-where file.name = this.file.name
-\`\`\`
 
-## ${noteSecReviews}
+## ${trans(this.book.language, "Reviews")}
 
-## ${noteSecNotes}
+## ${trans(this.book.language, "Notes")}
 
 `;
     let createdBook = null;
@@ -6811,29 +6966,29 @@ where file.name = this.file.name
 };
 
 // src/figure.ts
-var import_obsidian4 = require("obsidian");
+var import_obsidian5 = require("obsidian");
 async function onFigureCreation(app, file) {
   var _a;
-  if (!(file instanceof import_obsidian4.TFile) || file.extension !== "md") {
+  if (!(file instanceof import_obsidian5.TFile) || file.extension !== "md") {
     return;
   }
   if (((_a = file.parent) == null ? void 0 : _a.path) != "Figures") {
     return;
   }
   await sleep(500);
-  const title = file.basename;
-  let secNotes = "Notes";
+  const name = file.basename;
   let lang = "English";
+  let direction = "ltr";
   const arabicRegex = /[\u0600-\u06FF]/;
-  if (arabicRegex.test(title)) {
-    secNotes = "\u0645\u0644\u062D\u0648\u0638\u0627\u062A";
+  if (arabicRegex.test(name)) {
     lang = "\u0627\u0644\u0639\u0631\u0628\u064A\u0629";
+    direction = "rtl";
   }
   const date = getDate();
   const content = `---
 aliases:
 type: Figure
-name: ${title}
+name: ${name}
 tags: [${lang}]
 birth_date:
 death_date:
@@ -6845,31 +7000,21 @@ status:
 status_updated: ${date}
 summary:
 image:
-cssclass: disable-count
+direction: ${direction}
 ---
-\`\`\`dataview
-table WITHOUT ID birth_date as BDate, death_date as DDate, birth_place as BPlace, death_place as DPlace, file.mday as Updated
-from "Figures"
-where file.name = this.file.name
-\`\`\`
 \`\`\`dataview
 table type as Type, status as Status
 from "Books" or "Articles"
 where contains(authors, this.file.name)
 sort file.name asc
 \`\`\`
-\`\`\`dataview
-table WITHOUT ID summary as Summary
-from "Figures"
-where file.name = this.file.name
-\`\`\`
 
-## ${secNotes}
+## ${trans(lang, "Notes")}
 
 `;
   await app.vault.modify(file, content);
 }
-var AddFigures = class extends import_obsidian4.Modal {
+var AddFigures = class extends import_obsidian5.Modal {
   constructor(app) {
     super(app);
     this.figures = [];
@@ -6881,7 +7026,7 @@ var AddFigures = class extends import_obsidian4.Modal {
     });
   }
   addFigureSetting(contentEl, index) {
-    new import_obsidian4.Setting(contentEl).addText(
+    new import_obsidian5.Setting(contentEl).addText(
       (text) => text.setValue(this.figures[index]).setPlaceholder("Enter figure name").onChange(async (value) => {
         this.figures[index] = value;
       })
@@ -6895,21 +7040,21 @@ var AddFigures = class extends import_obsidian4.Modal {
   onOpen() {
     const { contentEl } = this;
     contentEl.createEl("h2", { text: "Create Figures Notes" });
-    new import_obsidian4.Setting(contentEl).setName("Figures").setDesc("Add figure").addButton((button) => {
+    new import_obsidian5.Setting(contentEl).setName("Figures").setDesc("Add figure").addButton((button) => {
       button.setTooltip("Add additional figure").setButtonText("+").setCta().onClick(() => {
         this.figures.push("");
         this.addFigureSetting(figuresContainer, this.figures.length - 1);
       });
     });
     const figuresContainer = contentEl.createEl("div");
-    new import_obsidian4.Setting(contentEl).addButton((button) => {
+    new import_obsidian5.Setting(contentEl).addButton((button) => {
       button.setButtonText("Create Figures").setCta().onClick(() => {
         if (this.figures.length === 0) {
-          new import_obsidian4.Notice("Add at least one figure!");
+          new import_obsidian5.Notice("Add at least one figure!");
           return;
         }
         if (this.figures.some((figure) => figure.trim() === "")) {
-          new import_obsidian4.Notice("Figure name can not be empty!");
+          new import_obsidian5.Notice("Figure name can not be empty!");
           return;
         }
         this.createFigures();
@@ -6936,10 +7081,10 @@ var AddFigures = class extends import_obsidian4.Modal {
 };
 
 // src/article.ts
-var import_obsidian5 = require("obsidian");
+var import_obsidian6 = require("obsidian");
 async function onArticleCreation(app, file) {
   var _a;
-  if (!(file instanceof import_obsidian5.TFile) || file.extension !== "md") {
+  if (!(file instanceof import_obsidian6.TFile) || file.extension !== "md") {
     return;
   }
   if (((_a = file.parent) == null ? void 0 : _a.path) != "Articles") {
@@ -6947,12 +7092,12 @@ async function onArticleCreation(app, file) {
   }
   await sleep(500);
   const title = file.basename;
-  let secIntro = "Introduction";
   let lang = "English";
+  let direction = "ltr";
   const arabicRegex = /[\u0600-\u06FF]/;
   if (arabicRegex.test(title)) {
-    secIntro = "\u0645\u0642\u062F\u0645\u0629";
     lang = "\u0627\u0644\u0639\u0631\u0628\u064A\u0629";
+    direction = "rtl";
   }
   const date = getDate();
   const content = `---
@@ -6969,27 +7114,20 @@ created: ${date}
 status: Unread
 status_updated: ${date}
 summary:
-cssclass: disable-count
+direction: ${direction}
 ---
-\`\`\`dataview
-table WITHOUT ID
-map(authors, (item) => link("Figures/"+item)) as Authors,
-file.mday as Updated
-from "Articles"
-where file.name = this.file.name
-\`\`\`
-\`\`\`dataview
-table WITHOUT ID summary as Summary
-from "Articles"
-where file.name = this.file.name
-\`\`\`
-
-## ${secIntro}
 
 `;
-  await app.vault.modify(file, content);
+  let currentContent = "";
+  if (file instanceof import_obsidian6.TFile) {
+    currentContent = await app.vault.read(file);
+  }
+  if (currentContent.startsWith("---")) {
+    return;
+  }
+  await app.vault.modify(file, content + currentContent);
 }
-var AddArticle = class extends import_obsidian5.Modal {
+var AddArticle = class extends import_obsidian6.Modal {
   constructor(app) {
     super(app);
     this.title = "";
@@ -6998,15 +7136,15 @@ var AddArticle = class extends import_obsidian5.Modal {
     this.containerEl.addClass("create-article");
     const { contentEl } = this;
     contentEl.createEl("h2", { text: "Create Article" });
-    new import_obsidian5.Setting(contentEl).setName("Article Title").addText(
+    new import_obsidian6.Setting(contentEl).setName("Article Title").addText(
       (text) => text.onChange((value) => {
         this.title = value;
       }).setPlaceholder("Enter article title")
     );
-    new import_obsidian5.Setting(contentEl).addButton((button) => {
+    new import_obsidian6.Setting(contentEl).addButton((button) => {
       button.setButtonText("Create Article").setCta().onClick(() => {
         if (this.title === "") {
-          new import_obsidian5.Notice("Missing article title!");
+          new import_obsidian6.Notice("Missing article title!");
           return;
         }
         this.createArticle();
@@ -7037,10 +7175,10 @@ var AddArticle = class extends import_obsidian5.Modal {
 };
 
 // src/note.ts
-var import_obsidian6 = require("obsidian");
+var import_obsidian7 = require("obsidian");
 async function onNoteCreation(app, file) {
   var _a;
-  if (!(file instanceof import_obsidian6.TFile) || file.extension !== "md") {
+  if (!(file instanceof import_obsidian7.TFile) || file.extension !== "md") {
     return;
   }
   if (((_a = file.parent) == null ? void 0 : _a.path) != "Notes") {
@@ -7048,12 +7186,12 @@ async function onNoteCreation(app, file) {
   }
   await sleep(500);
   const title = file.basename;
-  let secIntro = "Introduction";
   let lang = "English";
+  let direction = "ltr";
   const arabicRegex = /[\u0600-\u06FF]/;
   if (arabicRegex.test(title)) {
-    secIntro = "\u0645\u0642\u062F\u0645\u0629";
     lang = "\u0627\u0644\u0639\u0631\u0628\u064A\u0629";
+    direction = "rtl";
   }
   const date = getDate();
   const content = `---
@@ -7067,26 +7205,20 @@ created: ${date}
 status:
 status_updated: ${date}
 summary:
-cssclass: disable-count
+direction: ${direction}
 ---
-\`\`\`dataview
-table WITHOUT ID
-file.mday as Updated
-from "Notes"
-where file.name = this.file.name
-\`\`\`
-\`\`\`dataview
-table WITHOUT ID summary as Summary
-from "Notes"
-where file.name = this.file.name
-\`\`\`
-
-## ${secIntro}
 
 `;
-  await app.vault.modify(file, content);
+  let currentContent = "";
+  if (file instanceof import_obsidian7.TFile) {
+    currentContent = await app.vault.read(file);
+  }
+  if (currentContent.startsWith("---")) {
+    return;
+  }
+  await app.vault.modify(file, content + currentContent);
 }
-var AddNote = class extends import_obsidian6.Modal {
+var AddNote = class extends import_obsidian7.Modal {
   constructor(app) {
     super(app);
     this.title = "";
@@ -7095,15 +7227,15 @@ var AddNote = class extends import_obsidian6.Modal {
     this.containerEl.addClass("create-note");
     const { contentEl } = this;
     contentEl.createEl("h2", { text: "Create Note" });
-    new import_obsidian6.Setting(contentEl).setName("Note Title").addText(
+    new import_obsidian7.Setting(contentEl).setName("Note Title").addText(
       (text) => text.onChange((value) => {
         this.title = value;
       }).setPlaceholder("Enter Note title")
     );
-    new import_obsidian6.Setting(contentEl).addButton((button) => {
+    new import_obsidian7.Setting(contentEl).addButton((button) => {
       button.setButtonText("Create Note").setCta().onClick(() => {
         if (this.title === "") {
-          new import_obsidian6.Notice("Missing note title!");
+          new import_obsidian7.Notice("Missing note title!");
           return;
         }
         this.createNote();
@@ -7134,10 +7266,10 @@ var AddNote = class extends import_obsidian6.Modal {
 };
 
 // src/post.ts
-var import_obsidian7 = require("obsidian");
+var import_obsidian8 = require("obsidian");
 async function onPostCreation(app, file) {
   var _a;
-  if (!(file instanceof import_obsidian7.TFile) || file.extension !== "md") {
+  if (!(file instanceof import_obsidian8.TFile) || file.extension !== "md") {
     return;
   }
   if (((_a = file.parent) == null ? void 0 : _a.path) != "Blog/posts") {
@@ -7145,22 +7277,16 @@ async function onPostCreation(app, file) {
   }
   await sleep(500);
   const title = file.basename;
-  let secIntro = "Introduction";
   let lang = "English";
   let comments = "en";
-  let dir = "ltr";
+  let direction = "ltr";
   let locale = "default";
-  let otherPostsHeading = "Other posts";
-  let tocHeading = "On this page";
   const arabicRegex = /[\u0600-\u06FF]/;
   if (arabicRegex.test(title)) {
-    secIntro = "\u0645\u0642\u062F\u0645\u0629";
     lang = "\u0627\u0644\u0639\u0631\u0628\u064A\u0629";
     comments = "ar";
-    dir = "rtl";
+    direction = "rtl";
     locale = "ar-Eg";
-    otherPostsHeading = "\u0645\u0642\u0627\u0644\u0627\u062A \u0623\u062E\u0631\u0649";
-    tocHeading = "\u0627\u0644\u0645\u062D\u062A\u0648\u064A\u0627\u062A";
   }
   const date = getDate();
   const content = `---
@@ -7170,36 +7296,25 @@ type: Post
 title: ${title}
 date: ${date}
 tags: [${lang}]
-dir: ${dir}
+direction: ${direction}
 locale: ${locale}
-toc_heading: ${tocHeading}
+toc_heading: ${trans(lang, "On this page")}
 comments: ${comments}
-other_posts_heading: ${otherPostsHeading}
+other_posts_heading: ${trans(lang, "Other posts")}
 other_posts_limit: 10
 other_posts: [${lang}]
 created: ${date}
 status:
 status_updated: ${date}
 summary:
-cssclasses: disable-count
 ---
-\`\`\`dataview
-table without id file.mday as Updated
-from "Blog/posts"
-where file.name = this.file.name
-\`\`\`
-\`\`\`dataview
-table WITHOUT ID summary as Summary
-from "Blog/posts"
-where file.name = this.file.name
-\`\`\`
 
-## ${secIntro}
+## ${trans(lang, "Introduction")}
 
 `;
   await app.vault.modify(file, content);
 }
-var AddPost = class extends import_obsidian7.Modal {
+var AddPost = class extends import_obsidian8.Modal {
   constructor(app) {
     super(app);
     this.title = "";
@@ -7208,15 +7323,15 @@ var AddPost = class extends import_obsidian7.Modal {
     this.containerEl.addClass("create-post");
     const { contentEl } = this;
     contentEl.createEl("h2", { text: "Create Post" });
-    new import_obsidian7.Setting(contentEl).setName("Post Title").addText(
+    new import_obsidian8.Setting(contentEl).setName("Post Title").addText(
       (text) => text.onChange((value) => {
         this.title = value;
       }).setPlaceholder("Enter post title")
     );
-    new import_obsidian7.Setting(contentEl).addButton((button) => {
+    new import_obsidian8.Setting(contentEl).addButton((button) => {
       button.setButtonText("Create Post").setCta().onClick(() => {
         if (this.title === "") {
-          new import_obsidian7.Notice("Missing post title!");
+          new import_obsidian8.Notice("Missing post title!");
           return;
         }
         this.createPost();
@@ -7247,8 +7362,8 @@ var AddPost = class extends import_obsidian7.Modal {
 };
 
 // src/clean-covers.ts
-var import_obsidian8 = require("obsidian");
-var CleanCovers = class extends import_obsidian8.Modal {
+var import_obsidian9 = require("obsidian");
+var CleanCovers = class extends import_obsidian9.Modal {
   constructor(app) {
     super(app);
   }
@@ -7284,7 +7399,7 @@ var CleanCovers = class extends import_obsidian8.Modal {
       orphanedCovers.forEach((filePath) => {
         listEl.createEl("li", { text: filePath });
       });
-      new import_obsidian8.Setting(contentEl).addButton((button) => {
+      new import_obsidian9.Setting(contentEl).addButton((button) => {
         button.setButtonText("Confirm Delete").setCta().onClick(async () => {
           await this.deleteFiles(orphanedCovers);
           this.close();
@@ -7296,7 +7411,7 @@ var CleanCovers = class extends import_obsidian8.Modal {
       });
     } else {
       contentEl.createEl("p", { text: "No orphaned covers found." });
-      new import_obsidian8.Setting(contentEl).addButton((button) => {
+      new import_obsidian9.Setting(contentEl).addButton((button) => {
         button.setButtonText("Ok").setCta().onClick(() => {
           this.close();
         });
@@ -7310,11 +7425,15 @@ var CleanCovers = class extends import_obsidian8.Modal {
 };
 
 // src/main.ts
-var MyObsidianPlugin = class extends import_obsidian9.Plugin {
+var MyObsidianPlugin = class extends import_obsidian10.Plugin {
   async onload() {
     this.registerMarkdownCodeBlockProcessor("folder", async (source, el, ctx) => {
       let render = new FolderRender(this.app);
       await render.run(source, el, ctx);
+    });
+    this.registerMarkdownPostProcessor(async (el, ctx) => {
+      let render = new MetadataRender(this.app);
+      await render.run(el, ctx);
     });
     this.addCommand({
       id: "add-book",
@@ -7358,6 +7477,12 @@ var MyObsidianPlugin = class extends import_obsidian9.Plugin {
         (file) => onArticleCreation(this.app, file)
       ));
     });
+    this.app.workspace.onLayoutReady(async () => {
+      this.registerEvent(this.app.vault.on(
+        "rename",
+        (file) => onArticleCreation(this.app, file)
+      ));
+    });
     this.addCommand({
       id: "add-note",
       name: "Add Note",
@@ -7368,6 +7493,12 @@ var MyObsidianPlugin = class extends import_obsidian9.Plugin {
     this.app.workspace.onLayoutReady(async () => {
       this.registerEvent(this.app.vault.on(
         "create",
+        (file) => onNoteCreation(this.app, file)
+      ));
+    });
+    this.app.workspace.onLayoutReady(async () => {
+      this.registerEvent(this.app.vault.on(
+        "rename",
         (file) => onNoteCreation(this.app, file)
       ));
     });

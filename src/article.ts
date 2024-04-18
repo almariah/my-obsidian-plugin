@@ -1,5 +1,5 @@
 import { App, TFile, Notice, TAbstractFile, Modal, Setting } from 'obsidian';
-import { getDate, getFileUniqueName } from './utils'
+import { getDate, getFileUniqueName, trans } from './utils'
 
 export async function onArticleCreation(app: App, file: TAbstractFile): Promise<void> {
     if (!(file instanceof TFile) || file.extension !== "md") {
@@ -13,12 +13,12 @@ export async function onArticleCreation(app: App, file: TAbstractFile): Promise<
     await sleep(500);
 
     const title = file.basename
-    let secIntro = "Introduction"
     let lang = "English"
+    let direction = "ltr"
     const arabicRegex = /[\u0600-\u06FF]/;
     if (arabicRegex.test(title)) {
-        secIntro = "مقدمة"
         lang = "العربية"
+        direction = "rtl"
     }
 
     const date = getDate()
@@ -37,26 +37,19 @@ created: ${date}
 status: Unread
 status_updated: ${date}
 summary:
-cssclass: disable-count
+direction: ${direction}
 ---
-\`\`\`dataview
-table WITHOUT ID
-map(authors, (item) => link("Figures/"+item)) as Authors,
-file.mday as Updated
-from "Articles"
-where file.name = this.file.name
-\`\`\`
-\`\`\`dataview
-table WITHOUT ID summary as Summary
-from "Articles"
-where file.name = this.file.name
-\`\`\`
-
-## ${secIntro}
 
 `
-    await app.vault.modify(file, content);
+    let currentContent = ""
+    if (file instanceof  TFile) {
+        currentContent = await app.vault.read(file)
+    }
+    if (currentContent.startsWith("---")) {
+        return
+    }
 
+    await app.vault.modify(file, content + currentContent);
 }
 
 export class AddArticle extends Modal {

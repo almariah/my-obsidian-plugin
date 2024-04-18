@@ -1,5 +1,5 @@
 import { App, TFile, TAbstractFile, Modal, Setting, ButtonComponent, Notice } from 'obsidian';
-import { getDate, getFileUniqueName } from './utils'
+import { getDate, getFileUniqueName, trans } from './utils'
 
 export async function onFigureCreation(app: App, file: TAbstractFile): Promise<void> {
     if (!(file instanceof TFile) || file.extension !== "md") {
@@ -12,13 +12,13 @@ export async function onFigureCreation(app: App, file: TAbstractFile): Promise<v
 
     await sleep(500);
 
-    const title = file.basename
-    let secNotes = "Notes"
+    const name = file.basename
     let lang = "English"
+    let direction = "ltr"
     const arabicRegex = /[\u0600-\u06FF]/;
-    if (arabicRegex.test(title)) {
-        secNotes = "ملحوظات"
+    if (arabicRegex.test(name)) {
         lang = "العربية"
+        direction = "rtl"
     }
 
     const date = getDate()
@@ -26,7 +26,7 @@ export async function onFigureCreation(app: App, file: TAbstractFile): Promise<v
     const content = `---
 aliases:
 type: Figure
-name: ${title}
+name: ${name}
 tags: [${lang}]
 birth_date:
 death_date:
@@ -38,26 +38,16 @@ status:
 status_updated: ${date}
 summary:
 image:
-cssclass: disable-count
+direction: ${direction}
 ---
-\`\`\`dataview
-table WITHOUT ID birth_date as BDate, death_date as DDate, birth_place as BPlace, death_place as DPlace, file.mday as Updated
-from "Figures"
-where file.name = this.file.name
-\`\`\`
 \`\`\`dataview
 table type as Type, status as Status
 from "Books" or "Articles"
 where contains(authors, this.file.name)
 sort file.name asc
 \`\`\`
-\`\`\`dataview
-table WITHOUT ID summary as Summary
-from "Figures"
-where file.name = this.file.name
-\`\`\`
 
-## ${secNotes}
+## ${trans(lang, "Notes")}
 
 `
     await app.vault.modify(file, content);

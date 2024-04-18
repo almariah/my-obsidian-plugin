@@ -1,5 +1,6 @@
 import { Plugin, TAbstractFile, Menu, MenuItem } from 'obsidian';
 import { FolderRender } from './folder-render';
+import { MetadataRender } from './metadata-render';
 import { SearchBook } from './book'
 import { AddFigures, onFigureCreation } from './figure'
 import { AddArticle, onArticleCreation } from './article'
@@ -13,6 +14,11 @@ export default class MyObsidianPlugin extends Plugin {
         this.registerMarkdownCodeBlockProcessor('folder', async (source, el, ctx) => {
             let render = new FolderRender(this.app);
             await render.run(source, el, ctx);
+        });
+
+        this.registerMarkdownPostProcessor(async (el, ctx) => {
+            let render = new MetadataRender(this.app);
+            await render.run(el, ctx);
         });
 
         // add book command
@@ -68,6 +74,14 @@ export default class MyObsidianPlugin extends Plugin {
             ));
         })
 
+        // handle on article rename
+        this.app.workspace.onLayoutReady(async () => {
+            this.registerEvent(this.app.vault.on(
+                "rename",
+                (file: TAbstractFile) => onArticleCreation(this.app, file)
+            ));
+        })
+
         // add note command
         this.addCommand({
             id: 'add-note',
@@ -81,6 +95,14 @@ export default class MyObsidianPlugin extends Plugin {
         this.app.workspace.onLayoutReady(async () => {
             this.registerEvent(this.app.vault.on(
                 "create",
+                (file: TAbstractFile) => onNoteCreation(this.app, file)
+            ));
+        })
+
+        // handle on note rename
+        this.app.workspace.onLayoutReady(async () => {
+            this.registerEvent(this.app.vault.on(
+                "rename",
                 (file: TAbstractFile) => onNoteCreation(this.app, file)
             ));
         })

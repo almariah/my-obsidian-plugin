@@ -1,5 +1,5 @@
 import { App, ButtonComponent, Modal, Setting, SuggestModal, Notice } from 'obsidian';
-import { escapeYAMLForbiddenChars, sanitizeFilename, getFileUniqueName, getDate, downloadImage } from './utils'
+import { escapeYAMLForbiddenChars, sanitizeFilename, getFileUniqueName, getDate, downloadImage, trans } from './utils'
 
 const GOOGLE_BOOKS_API_URL = "https://www.googleapis.com/books/v1/volumes";
 
@@ -214,7 +214,7 @@ class CreateBook extends Modal {
     getLanguage(lang1: string, lang2: string, title: string) {
         const arabicRegex = /[\u0600-\u06FF]/;
         if (arabicRegex.test(title)) {
-            return "ar"
+            return "العربية"
         }
         return lang2 || lang1 || "en"
     }
@@ -516,14 +516,15 @@ class CreateBook extends Modal {
             coverFile = `${newFileName.substring(0, newFileName.length - 3)}.jpeg`
         }
 
-        let noteSecReviews = "Reviews"
-        let noteSecNotes = "Notes"
-        if (this.book.language == "ar") {
-            this.book.tags.push("العربية")
-            noteSecReviews = "مراجعات"
-            noteSecNotes = "ملحوظات"
-        } else if (this.book.language == "en") {
+        if (this.book.language === "en") {
             this.book.tags.push("English")
+        } else {
+            this.book.tags.push(this.book.language)
+        }
+
+        let direction = "ltr"
+        if (this.book.language === "العربية") {
+            direction = "rtl"
         }
 
         const date = getDate()
@@ -550,24 +551,12 @@ status: Unread
 status_updated: ${date}
 summary: "${this.book.summary}"
 cover: ${coverFile}
-cssclass: disable-count
+direction: ${direction}
 ---
-\`\`\`dataview
-table WITHOUT ID embed(link(cover, "150")) as Cover,
-map(authors, (item) => link("Figures/"+item)) as Authors,
-file.mday as Updated
-from "Books"
-where file.name = this.file.name
-\`\`\`
-\`\`\`dataview
-table WITHOUT ID summary as Summary
-from "Books"
-where file.name = this.file.name
-\`\`\`
 
-## ${noteSecReviews}
+## ${trans(this.book.language, "Reviews")}
 
-## ${noteSecNotes}
+## ${trans(this.book.language, "Notes")}
 
 `
         let createdBook = null

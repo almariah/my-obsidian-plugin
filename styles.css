@@ -22,9 +22,8 @@
 }
 
 .folder-cover-image {
-    max-width: 150px;
-    max-height: 200px;
-    min-width: 128x;
+    width: 150px;
+    max-height: 400px;
 }
 
 .folder-card:hover {
